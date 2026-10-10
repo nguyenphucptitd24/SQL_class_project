@@ -1,0 +1,22 @@
+digraph KTX {
+  graph [rankdir=LR, bgcolor="white", pad="0.25", nodesep="0.55", ranksep="0.8", fontname="Arial", label="EER - HE THONG QUAN LY KY TUC XA", labelloc=t, fontsize=20];
+  node [shape=record, style="rounded,filled", fillcolor="#eef5ff", color="#41658a", fontname="Arial", fontsize=10, margin="0.12,0.08"];
+  edge [fontname="Arial", fontsize=9, color="#555555", arrowsize=0.8];
+  SV [label="{SinhVien|PK MaSV\lUQ SoCMT\lNgaySinh\lLop\lQueQuan\l}"];
+  PH [label="{Phong|PK SoPhong\lLoaiPhong\lDonGia\lSoNguoiToiDa\l}"];
+  TP [label="{ThuePhong|PK MaThue\lFK MaSV\lFK SoPhong\lNgayBatDau\lNgayKetThuc (NULL=dang o)\l}", fillcolor="#fff5df", color="#9b7535"];
+  DV [label="{DichVu|PK MaDV\lTenDV\lDonGia\lMoTa\l}"];
+  SD [label="{SuDungDichVu|PK MaSuDung\lFK MaSV\lFK MaDV\lThoiGianSuDung\lSoLuong\lDonGiaApDung\l}", fillcolor="#fff5df", color="#9b7535"];
+  XE [label="{XeThang|PK MaXe\lFK MaSV\lUQ BienSo\lLoaiXe\lNgayDangKy\lNgayHetHan\lDonGiaThang\l}"];
+  LX [label="{LuotXe|PK MaLuot\lFK MaXe\lThoiGianLay\lThoiGianGui\lSoLuotMienPhiSuDung\lSoTienPhatSinh\l}", fillcolor="#fff5df", color="#9b7535"];
+  K [label="{Khach|PK SoCMT\lHoTen\lNgaySinh\l}"];
+  LT [label="{LuotTham|PK MaLuotTham\lFK SoCMTKhach\lFK MaSV\lThoiGianDen\l}", fillcolor="#fff5df", color="#9b7535"];
+  SV -> TP [label="1 : N"];
+  PH -> TP [label="1 : N"];
+  SV -> SD [label="1 : N"];
+  DV -> SD [label="1 : N"];
+  SV -> XE [label="1 : N (toi da 2 xe, app kiem tra)"];
+  XE -> LX [label="1 : N"];
+  K -> LT [label="1 : N"];
+  SV -> LT [label="1 : N"];
+}
