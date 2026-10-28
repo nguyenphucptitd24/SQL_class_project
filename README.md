@@ -6,6 +6,13 @@
 - Java Swing: xem/tim/them/sua/xoa sinh vien; xem/them/sua phong; xep phong va tra phong; hien thi suc chua va so cho trong.
 - JDBC dung PreparedStatement; xep phong dung transaction va khoa dong phong (`SELECT ... FOR UPDATE`).
 
+## Vai tro thanh vien cuoi (tich hop + hoan thien)
+- Tich hop phan core chay duoc: model, repository, service, UI cho SinhVien va Phong/ThuePhong.
+- Kiem tra quy tac nghiep vu chinh: sinh vien chi co mot hop dong dang o, phong khong vuot suc chua, ngay tra phai hop le.
+- Chu y: khong can doi phan code cua cac thanh vien khac neu chua co san. Voi cac module phu thuoc vao nhau (DichVu, SuDungDichVu, XeThang, KhachTham), chi thuc hien khi schema/logic tu tung thanh vien da duoc cap nhat.
+- Dung lai o nhung nghi vu chua co du lieu, interface hay schema de giai quyet; khong thieu lam nham len code khong co tien de.
+- Nguon duoc thiet ke de chay manh me khi nhom core da xong va co the de lai cho phan phu nhin vao sau.
+
 ## Yeu cau
 - JDK 17+
 - MySQL Server 8+ va MySQL Workbench
