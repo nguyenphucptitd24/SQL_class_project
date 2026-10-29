@@ -1,4 +1,4 @@
--- PROJECT 2: QUAN LY KY TUC XA - MySQL 8+
+-- PROJECT 2: QUẢN LÝ KÝ TÚC XÁ - MySQL 8+
 -- Luu y: neu tai khoan khong co quyen CREATE DATABASE, bo qua CREATE DATABASE/USE
 -- va chon schema do giang vien cap truoc khi chay cac lenh CREATE TABLE.
 CREATE DATABASE IF NOT EXISTS KTX CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
