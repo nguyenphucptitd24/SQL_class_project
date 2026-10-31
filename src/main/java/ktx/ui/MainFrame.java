@@ -10,6 +10,7 @@ public class MainFrame extends JFrame {
         JTabbedPane tabs=new JTabbedPane();
         tabs.addTab("Quan ly sinh vien",new SinhVienPanel());
         tabs.addTab("Phong va thue phong",new PhongPanel());
+        tabs.addTab("Xe ve thang",new XeThangPanel());
         setContentPane(tabs);
     }
     public static void main(String[] args) {
