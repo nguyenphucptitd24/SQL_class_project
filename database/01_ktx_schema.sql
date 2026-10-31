@@ -80,8 +80,29 @@ CREATE TABLE IF NOT EXISTS LuotXe (
   CONSTRAINT fk_luotxe_xe FOREIGN KEY (MaXe) REFERENCES XeThang(MaXe),
   CONSTRAINT chk_luotxe_luot CHECK (SoLuotMienPhiSuDung BETWEEN 0 AND 2),
   CONSTRAINT chk_luotxe_tien CHECK (SoTienPhatSinh >= 0),
+  CONSTRAINT chk_luotxe_thoigian CHECK (ThoiGianGui IS NULL OR ThoiGianLay IS NULL OR ThoiGianGui >= ThoiGianLay),
   INDEX idx_luotxe_thoigianlay (ThoiGianLay),
   INDEX idx_luotxe_thoigiangui (ThoiGianGui)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS SuKienXe (
+  MaSuKien BIGINT PRIMARY KEY AUTO_INCREMENT,
+  MaLuot BIGINT NOT NULL,
+  MaXe VARCHAR(20) NOT NULL,
+  LoaiSuKien ENUM('LAY','GUI') NOT NULL,
+  ThoiGian DATETIME NOT NULL,
+  MienPhi BOOLEAN NOT NULL,
+  SoTienPhatSinh DECIMAL(12,2) NOT NULL DEFAULT 0,
+  CONSTRAINT fk_sukienxe_luot FOREIGN KEY (MaLuot) REFERENCES LuotXe(MaLuot),
+  CONSTRAINT fk_sukienxe_xe FOREIGN KEY (MaXe) REFERENCES XeThang(MaXe),
+  CONSTRAINT uq_sukienxe_luot_loai UNIQUE (MaLuot,LoaiSuKien),
+  CONSTRAINT chk_sukienxe_tien CHECK (SoTienPhatSinh >= 0),
+  CONSTRAINT chk_sukienxe_mienphi CHECK (
+    (MienPhi = TRUE AND SoTienPhatSinh = 0) OR
+    (MienPhi = FALSE AND SoTienPhatSinh > 0)
+  ),
+  INDEX idx_sukienxe_xe_thoigian (MaXe,ThoiGian),
+  INDEX idx_sukienxe_thoigian (ThoiGian)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS Khach (
@@ -110,6 +131,10 @@ INSERT IGNORE INTO Phong(SoPhong,LoaiPhong,DonGia,SoNguoiToiDa) VALUES
 ('P101','Phong 4 nguoi',1500000,4),('P102','Phong 6 nguoi',1200000,6),('P103','Phong 8 nguoi',1000000,8);
 INSERT IGNORE INTO DichVu(MaDV,TenDV,DonGia,MoTa) VALUES
 ('DV001','Giat la',30000,'Don gia mau moi lan'),('DV002','Trong xe',50000,'Don gia mau tham khao');
+INSERT IGNORE INTO XeThang(MaXe,MaSV,BienSo,LoaiXe,NgayDangKy,DonGiaThang) VALUES
+('XE001','SV001','DEMO-001','Xe may','2026-09-01',100000),
+('XE002','SV001','DEMO-002','Xe dap dien','2026-09-01',100000),
+('XE003','SV002','DEMO-003','Xe may','2026-09-01',100000);
 INSERT IGNORE INTO Khach(SoCMT,HoTen,NgaySinh) VALUES
 ('GUEST0001','Nguyen Van Khach','2000-01-01');
 INSERT INTO ThuePhong(MaSV,SoPhong,NgayBatDau,NgayKetThuc)
@@ -118,6 +143,35 @@ INSERT INTO ThuePhong(MaSV,SoPhong,NgayBatDau,NgayKetThuc)
 SELECT 'SV002','P101','2026-09-01',NULL WHERE NOT EXISTS(SELECT 1 FROM ThuePhong WHERE MaSV='SV002' AND NgayKetThuc IS NULL);
 INSERT INTO ThuePhong(MaSV,SoPhong,NgayBatDau,NgayKetThuc)
 SELECT 'SV003','P102','2026-09-05',NULL WHERE NOT EXISTS(SELECT 1 FROM ThuePhong WHERE MaSV='SV003' AND NgayKetThuc IS NULL);
+
+-- Du lieu mau xe: 2 thao tac mien phi dau ngay, cac thao tac sau tinh 3.000 VND/lan.
+INSERT INTO LuotXe(MaXe,ThoiGianLay,ThoiGianGui,SoLuotMienPhiSuDung,SoTienPhatSinh)
+SELECT 'XE001','2026-10-10 08:00:00','2026-10-10 12:00:00',2,0
+WHERE NOT EXISTS (SELECT 1 FROM LuotXe WHERE MaXe='XE001' AND ThoiGianLay='2026-10-10 08:00:00');
+INSERT INTO LuotXe(MaXe,ThoiGianLay,ThoiGianGui,SoLuotMienPhiSuDung,SoTienPhatSinh)
+SELECT 'XE001','2026-10-10 14:00:00','2026-10-10 18:00:00',0,6000
+WHERE NOT EXISTS (SELECT 1 FROM LuotXe WHERE MaXe='XE001' AND ThoiGianLay='2026-10-10 14:00:00');
+
+INSERT INTO SuKienXe(MaLuot,MaXe,LoaiSuKien,ThoiGian,MienPhi,SoTienPhatSinh)
+SELECT lx.MaLuot,lx.MaXe,'LAY',lx.ThoiGianLay,TRUE,0
+FROM LuotXe lx
+WHERE lx.MaXe='XE001' AND lx.ThoiGianLay='2026-10-10 08:00:00'
+  AND NOT EXISTS (SELECT 1 FROM SuKienXe sk WHERE sk.MaLuot=lx.MaLuot AND sk.LoaiSuKien='LAY');
+INSERT INTO SuKienXe(MaLuot,MaXe,LoaiSuKien,ThoiGian,MienPhi,SoTienPhatSinh)
+SELECT lx.MaLuot,lx.MaXe,'GUI',lx.ThoiGianGui,TRUE,0
+FROM LuotXe lx
+WHERE lx.MaXe='XE001' AND lx.ThoiGianLay='2026-10-10 08:00:00'
+  AND NOT EXISTS (SELECT 1 FROM SuKienXe sk WHERE sk.MaLuot=lx.MaLuot AND sk.LoaiSuKien='GUI');
+INSERT INTO SuKienXe(MaLuot,MaXe,LoaiSuKien,ThoiGian,MienPhi,SoTienPhatSinh)
+SELECT lx.MaLuot,lx.MaXe,'LAY',lx.ThoiGianLay,FALSE,3000
+FROM LuotXe lx
+WHERE lx.MaXe='XE001' AND lx.ThoiGianLay='2026-10-10 14:00:00'
+  AND NOT EXISTS (SELECT 1 FROM SuKienXe sk WHERE sk.MaLuot=lx.MaLuot AND sk.LoaiSuKien='LAY');
+INSERT INTO SuKienXe(MaLuot,MaXe,LoaiSuKien,ThoiGian,MienPhi,SoTienPhatSinh)
+SELECT lx.MaLuot,lx.MaXe,'GUI',lx.ThoiGianGui,FALSE,3000
+FROM LuotXe lx
+WHERE lx.MaXe='XE001' AND lx.ThoiGianLay='2026-10-10 14:00:00'
+  AND NOT EXISTS (SELECT 1 FROM SuKienXe sk WHERE sk.MaLuot=lx.MaLuot AND sk.LoaiSuKien='GUI');
 
 CREATE OR REPLACE VIEW V_SinhVienDangO AS
 SELECT sv.MaSV,sv.SoCMT,sv.NgaySinh,sv.Lop,sv.QueQuan,p.SoPhong,p.LoaiPhong,p.DonGia,tp.NgayBatDau

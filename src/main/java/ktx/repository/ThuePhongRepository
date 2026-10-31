@@ -1,0 +1,105 @@
+package ktx.repository;
+
+import ktx.database.DatabaseConnection;
+import ktx.model.ThuePhong;
+import java.sql.*;
+import java.util.*;
+
+public class ThuePhongRepository {
+
+    // Lấy danh sách thuê phòng
+    public List<ThuePhong> findAll() throws SQLException {
+        String sql = "SELECT * FROM ThuePhong ORDER BY MaThue";
+        List<ThuePhong> list = new ArrayList<>();
+
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement p = c.prepareStatement(sql);
+             ResultSet r = p.executeQuery()) {
+
+            while (r.next()) {
+                Date ngayTra = r.getDate("NgayKetThuc");
+
+                list.add(new ThuePhong(
+                    r.getInt("MaThue"),
+                    r.getString("MaSV"),
+                    r.getString("SoPhong"),
+                    r.getDate("NgayBatDau").toLocalDate(),
+                    ngayTra == null ? null : ngayTra.toLocalDate()
+                ));
+            }
+        }
+        return list;
+    }
+
+    // Kiểm tra sinh viên đang thuê phòng hay chưa
+    public boolean dangThuePhong(String maSV) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM ThuePhong "
+                   + "WHERE MaSV=? AND NgayKetThuc IS NULL";
+
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement p = c.prepareStatement(sql)) {
+
+            p.setString(1, maSV);
+
+            try (ResultSet r = p.executeQuery()) {
+                r.next();
+                return r.getInt(1) > 0;
+            }
+        }
+    }
+
+    // Đếm số người đang ở trong phòng
+    public int demNguoiTrongPhong(String soPhong) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM ThuePhong "
+                   + "WHERE SoPhong=? AND NgayKetThuc IS NULL";
+
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement p = c.prepareStatement(sql)) {
+
+            p.setString(1, soPhong);
+
+            try (ResultSet r = p.executeQuery()) {
+                r.next();
+                return r.getInt(1);
+            }
+        }
+    }
+
+    // Thêm lượt thuê phòng
+    public void insert(ThuePhong t) throws SQLException {
+        String sql = "INSERT INTO ThuePhong "
+                   + "(MaSV, SoPhong, NgayBatDau, NgayKetThuc) "
+                   + "VALUES (?, ?, ?, ?)";
+
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement p = c.prepareStatement(sql)) {
+
+            p.setString(1, t.maSV());
+            p.setString(2, t.soPhong());
+            p.setDate(3, Date.valueOf(t.ngayBatDau()));
+
+            if (t.ngayKetThuc() == null) {
+                p.setNull(4, Types.DATE);
+            } else {
+                p.setDate(4, Date.valueOf(t.ngayKetThuc()));
+            }
+
+            p.executeUpdate();
+        }
+    }
+
+    // Trả phòng
+    public boolean traPhong(String maSV, Date ngayTra) throws SQLException {
+        String sql = "UPDATE ThuePhong SET NgayKetThuc=? "
+                   + "WHERE MaSV=? AND NgayKetThuc IS NULL";
+
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement p = c.prepareStatement(sql)) {
+
+            p.setDate(1, ngayTra);
+            p.setString(2, maSV);
+
+            return p.executeUpdate() > 0;
+        }
+    }
+}

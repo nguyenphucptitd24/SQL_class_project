@@ -28,7 +28,7 @@ Schema tổng thể có thêm `DichVu`, `SuDungDichVu`, `XeThang`, `LuotXe`, `Kh
 7. Tiền phòng tính tròn tháng: chỉ cần thời gian thuê giao với tháng lập hóa đơn thì tính đủ đơn giá tháng đó. Cần thống nhất thêm quy tắc khi chuyển phòng trong tháng nếu giảng viên yêu cầu chi tiết hơn.
 
 ### 5. Chạy chương trình
-- Cần JDK 17+, MySQL 8+ và NetBeans có hỗ trợ Maven.
+- Cần JDK 25+, MySQL 8+ và NetBeans có hỗ trợ Maven.
 - Chạy `database/01_ktx_schema.sql` trong MySQL Workbench.
 - Cấu hình `KTX_DB_URL`, `KTX_DB_USER`, `KTX_DB_PASSWORD` nếu không dùng tài khoản mặc định.
 - Mở project Maven `KTXManagement` trong NetBeans và chạy `ktx.ui.MainFrame`.
