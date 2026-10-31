@@ -35,6 +35,8 @@ Cơ sở dữ liệu có thêm các bảng phục vụ việc phát triển nh�
 
 Module xe vé tháng hiện hỗ trợ đăng ký xe gắn với sinh viên, giới hạn tối đa hai xe đang hoạt động mỗi sinh viên, ghi nhận từng lần lấy/gửi, miễn phí hai thao tác mỗi xe mỗi ngày, tính 3.000 VND cho từng thao tác vượt mức và thống kê hóa đơn tháng (100.000 VND/xe/tháng cộng phí phát sinh). Vé tháng được tính tròn tháng nếu thời hạn đăng ký giao với tháng lập báo cáo.
 
+Module khách thăm có giao diện quản lý khách, ghi nhận lượt thăm, lịch sử và thống kê; có thể mở trực tiếp từ tab **Khách thăm** trên cửa sổ chính.
+
 ## 2. Công nghệ sử dụng
 
 - Ngôn ngữ lập trình: Java.
@@ -44,7 +46,7 @@ Module xe vé tháng hiện hỗ trợ đăng ký xe gắn với sinh viên, gi�
 - Công cụ lập trình: Visual Studio Code (VS Code).
 - Công cụ quản lý cơ sở dữ liệu: MySQL Workbench.
 - Quản lý thư viện: Maven.
-- Phiên bản Java: JDK 17 trở lên.
+- Phiên bản Java: JDK 25 (LTS) trở lên.
 
 ## 3. Cấu trúc dự án
 
@@ -71,7 +73,7 @@ Cấu trúc thực tế có thể có thêm các thư mục `model`, `repository
 
 Trước khi chạy dự án, cần cài đặt:
 
-1. **JDK 17 trở lên:** dùng để biên dịch và chạy Java.
+1. **JDK 25 (LTS) trở lên:** dùng để biên dịch và chạy Java.
 2. **Visual Studio Code:** dùng để mở và phát triển mã nguồn.
 3. **Extension Pack for Java:** hỗ trợ Java trong VS Code.
 4. **Maven for Java:** hỗ trợ quản lý dự án Maven.
@@ -184,7 +186,7 @@ Mở mục Extensions trong VS Code và cài đặt:
 - Extension Pack for Java.
 - Maven for Java.
 
-Nếu VS Code yêu cầu chọn JDK, hãy chọn JDK 17 trở lên.
+Nếu VS Code yêu cầu chọn JDK, hãy chọn JDK 25 trở lên.
 
 ### Bước 3. Tải thư viện Maven
 
