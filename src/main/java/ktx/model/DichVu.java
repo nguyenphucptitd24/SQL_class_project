@@ -55,6 +55,20 @@ public class DichVu {
         this.moTa = moTa;
     }
 
+    public boolean isValid() {
+        return maDV != null && !maDV.isBlank()
+                && tenDV != null && !tenDV.isBlank()
+                && donGia != null
+                && donGia.compareTo(BigDecimal.ZERO) >= 0;
+    }
+
+    public BigDecimal getThanhTien(int soLuong) {
+        if (soLuong <= 0 || donGia == null) {
+            return BigDecimal.ZERO;
+        }
+        return donGia.multiply(BigDecimal.valueOf(soLuong));
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -70,6 +84,6 @@ public class DichVu {
 
     @Override
     public String toString() {
-        return tenDV; // Hiển thị tên dịch vụ khi đưa vào JComboBox của Swing
+        return tenDV != null ? tenDV : "";
     }
 }
