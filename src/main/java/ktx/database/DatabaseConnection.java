@@ -10,7 +10,7 @@ public final class DatabaseConnection {
         "jdbc:mysql://localhost:3306/KTX?serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8"
     );
     private static final String USER = System.getenv().getOrDefault("KTX_DB_USER", "root");
-    private static final String PASSWORD = System.getenv().getOrDefault("KTX_DB_PASSWORD", "");
+    private static final String PASSWORD = System.getenv().getOrDefault("KTX_DB_PASSWORD", "manhmai");
 
     private DatabaseConnection() {}
 

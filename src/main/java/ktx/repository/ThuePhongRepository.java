@@ -8,6 +8,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,26 +48,23 @@ public class ThuePhongRepository {
         return list;
     }
 
-    public List<ThuePhong> findActiveByRoom(String soPhong) throws SQLException {
-        String sql = "SELECT MaThue, MaSV, SoPhong, NgayBatDau, NgayKetThuc FROM ThuePhong WHERE SoPhong = ? AND NgayKetThuc IS NULL";
-        List<ThuePhong> list = new ArrayList<>();
-        try (Connection c = DatabaseConnection.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
-            p.setString(1, soPhong);
-            try (ResultSet r = p.executeQuery()) {
-                while (r.next()) {
-                    list.add(mapRow(r));
-                }
-            }
-        }
-        return list;
-    }
-
     public boolean existsActiveByStudent(String maSV) throws SQLException {
         String sql = "SELECT 1 FROM ThuePhong WHERE MaSV = ? AND NgayKetThuc IS NULL LIMIT 1";
         try (Connection c = DatabaseConnection.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
             p.setString(1, maSV);
             try (ResultSet r = p.executeQuery()) {
                 return r.next();
+            }
+        }
+    }
+
+    public int countActiveInRoom(String soPhong) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM ThuePhong WHERE SoPhong = ? AND NgayKetThuc IS NULL";
+        try (Connection c = DatabaseConnection.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setString(1, soPhong);
+            try (ResultSet r = p.executeQuery()) {
+                if (r.next()) return r.getInt(1);
+                return 0;
             }
         }
     }
@@ -78,7 +76,7 @@ public class ThuePhongRepository {
             p.setString(2, thuePhong.soPhong());
             p.setDate(3, Date.valueOf(thuePhong.ngayBatDau()));
             if (thuePhong.ngayKetThuc() == null) {
-                p.setNull(4, java.sql.Types.DATE);
+                p.setNull(4, Types.DATE);
             } else {
                 p.setDate(4, Date.valueOf(thuePhong.ngayKetThuc()));
             }
