@@ -8,33 +8,73 @@
 - Làm phần giao diện tổng thể, xử lý lỗi tích hợp và chuẩn bị README + hướng dẫn chạy.
 - Không cần đợi tất cả thành viên khác hoàn tất code mới bắt đầu; chỉ cần ghép các phần có sẵn và xử lý phần còn thiếu theo mục tiêu dự án.
 
-## 1. Chức năng chính
+## 1. Vai trò từng thành viên
 
-### 1.1. Quản lý sinh viên
+### Thành viên Biên
+- Thiết kế CSDL tổng thể + module Sinh viên và Phòng ở.
+- Chốt quy tắc nghiệp vụ, danh sách bảng, khóa chính và khóa ngoại.
+- Vẽ hoặc phối hợp hoàn thiện mô hình EER.
+- Làm CRUD sinh viên, phòng ở, quản lý sinh viên thuê phòng.
+- Kiểm tra số người tối đa trong phòng.
+- Ghép code, kiểm thử toàn hệ thống, quản lý GitHub và hoàn thiện báo cáo.
+
+### Thành viên Mạnh
+- Quản lý dịch vụ và hóa đơn.
+- Xây dựng bảng dịch vụ và các lần sinh viên sử dụng dịch vụ.
+- Ghi nhận số lượng, thời gian, đơn giá áp dụng.
+- Tính tổng tiền dịch vụ theo sinh viên và tháng.
+- Viết truy vấn doanh thu từng dịch vụ mỗi tháng.
+- Làm giao diện ghi nhận dịch vụ và xem hóa đơn.
+
+### Thành viên Thiện
+- Quản lý xe tháng.
+- Quản lý xe đăng ký vé tháng và chủ xe.
+- Theo dõi lượt lấy/gửi xe, tính phí vượt lượt miễn phí.
+- Kiểm tra mỗi sinh viên đăng ký tối đa 2 xe.
+- Xử lý quy tắc miễn phí 2 lần/ngày và phí 3.000 đồng/lượt phát sinh.
+- Làm giao diện quản lý xe và lịch sử gửi xe.
+
+### Thành viên Nam
+- Quản lý khách thăm.
+- Quản lý thông tin khách đến chơi và sinh viên được thăm.
+- Ghi nhận ngày, thời gian đến thăm.
+- Truy vấn khách thăm theo tuần/tháng và số lần mỗi khách đến.
+- Làm giao diện nhập khách và tra cứu lịch sử.
+
+### Thành viên Phúc
+- Giao diện tổng thể và tích hợp.
+- Tạo màn hình chính, menu điều hướng và bố cục thống nhất.
+- Tích hợp các module của thành viên 1–4.
+- Kiểm thử các chức năng, xử lý lỗi giao diện.
+- Hỗ trợ chạy thử, hướng dẫn cài đặt và hoàn thiện README GitHub.
+
+## 2. Chức năng chính
+
+### 2.1. Quản lý sinh viên
 - Hiển thị danh sách sinh viên.
 - Tìm kiếm sinh viên.
 - Thêm, sửa, xóa sinh viên.
 - Kiểm tra mã sinh viên và số CCCD không trùng lặp.
 
-### 1.2. Quản lý phòng
+### 2.2. Quản lý phòng
 - Hiển thị danh sách phòng.
 - Thêm và sửa phòng.
 - Hiển thị sức chứa, số sinh viên đang ở và số chỗ còn trống.
 - Kiểm tra giới hạn tối đa người trong phòng.
 
-### 1.3. Quản lý thuê phòng
+### 2.3. Quản lý thuê phòng
 - Xếp sinh viên vào phòng.
 - Trả phòng.
 - Chặn điều kiện thuê phòng không hợp lệ.
 - Kiểm tra ngày bắt đầu / kết thúc, sức chứa phòng và hợp đồng đang hoạt động.
 
-### 1.4. Module mở rộng
+### 2.4. Module mở rộng
 - Dịch vụ và hóa đơn.
 - Xe tháng và phí phát sinh.
 - Quản lý khách thăm.
 - Thống kê và lịch sử hoạt động.
 
-## 2. Công nghệ sử dụng
+## 3. Công nghệ sử dụng
 - Java Swing
 - JDBC
 - MySQL 8+
@@ -42,7 +82,7 @@
 - JDK 17+
 - VS Code + Extension Pack for Java
 
-## 3. Cấu trúc dự án
+## 4. Cấu trúc dự án
 
 ```text
 KTXManagement/
@@ -68,40 +108,67 @@ KTXManagement/
 └── .gitignore
 ```
 
-## 4. Cài đặt và chạy
+## 5. Cài đặt và chạy
 
-### 4.1. Cài đặt môi trường
+### 5.1. Cài đặt môi trường
 - JDK 17+
 - MySQL Server 8+
 - VS Code + Java Extension Pack
 - Maven
 
-### 4.2. Kết nối MySQL
-Mở file `src/main/java/ktx/database/DatabaseConnection.java` và đảm bảo URL, username, password phù hợp với máy local của bạn.
+### 5.2. Kết nối MySQL
+Project đọc kết nối MySQL từ biến môi trường nếu có, nếu không thì dùng giá trị mặc định trong file `src/main/java/ktx/database/DatabaseConnection.java`.
 
-Ví dụ:
+#### 4.2.1. Cấu hình theo máy local
+Mỗi máy có thể có username/password MySQL khác nhau. Vì vậy nên cấu hình bằng biến môi trường thay vì hardcode mật khẩu cứng vào code.
 
-```properties
-KTX_DB_URL=jdbc:mysql://localhost:3306/KTX?serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8
-KTX_DB_USER=root
-KTX_DB_PASSWORD=your_password
+Ví dụ trên Windows PowerShell:
+
+```powershell
+$env:KTX_DB_URL = "jdbc:mysql://localhost:3306/KTX?serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8"
+$env:KTX_DB_USER = "root"
+$env:KTX_DB_PASSWORD = "your_password"
 ```
 
-### 4.3. Tạo schema
+Nếu không dùng biến môi trường, kiểm tra file:
+
+```java
+private static final String URL = System.getenv().getOrDefault(
+    "KTX_DB_URL",
+    "jdbc:mysql://localhost:3306/KTX?serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8"
+);
+private static final String USER = System.getenv().getOrDefault("KTX_DB_USER", "root");
+private static final String PASSWORD = System.getenv().getOrDefault("KTX_DB_PASSWORD", "your_password");
+```
+
+Lưu ý: mật khẩu MySQL trên máy khác nhau, nên mỗi máy cần thay `your_password` bằng mật khẩu thực tế của máy đó. Không nên cố dùng chung 1 cài đặt trên mọi máy.
+
+### 5.3. Tạo schema
 Mở file SQL trong thư mục `database/` và thực thi theo thứ tự phù hợp.
 
-### 4.4. Chạy ứng dụng
-```bash
+Với database đã có sẵn, bạn có thể bỏ qua các lệnh `CREATE DATABASE` / `USE KTX` nếu tài khoản MySQL không có quyền tạo schema.
+
+### 5.4. Chạy ứng dụng
+Từ thư mục dự án:
+
+```powershell
 mvn clean compile
-mvn exec:java -Dexec.mainClass="ktx.ui.MainFrame"
+mvn --% org.codehaus.mojo:exec-maven-plugin:3.6.4:java -Dexec.mainClass=ktx.ui.MainFrame -Dexec.classpathScope=runtime
 ```
 
-## 5. Lưu ý
+Hoặc chạy trực tiếp bằng Java sau khi build xong:
+
+```powershell
+mvn dependency:copy-dependencies -DincludeScope=runtime
+java -cp "target\classes;target\dependency\*" ktx.ui.MainFrame
+```
+
+## 6. Lưu ý
 - Nếu tài khoản MySQL không có quyền tạo database, hãy chọn schema sẵn có và bỏ qua các lệnh `CREATE DATABASE` / `USE KTX`.
+- Mật khẩu MySQL khác nhau giữa các máy, nên cần cập nhật đúng `KTX_DB_PASSWORD` theo máy đang chạy.
 - Không đăng mật khẩu MySQL thật lên GitHub.
 - Khi ghép các module khác nhau, ưu tiên xử lý conflict theo cấu trúc package và tên class thống nhất.
-
-Lệnh trên yêu cầu dự án đã cấu hình Maven Exec Plugin trong `pom.xml`. Nếu chưa có plugin này, có thể thêm cấu hình phù hợp hoặc sử dụng cách chạy trực tiếp dưới đây.
+- Nếu gặp lỗi `No suitable driver found for jdbc:mysql://...`, cần đảm bảo dependency MySQL Connector/J đã được tải đúng bằng Maven và classpath runtime đã chứa file `.jar`.
 
 **Cách chạy trực tiếp trong VS Code:**
 
@@ -112,7 +179,7 @@ Lệnh trên yêu cầu dự án đã cấu hình Maven Exec Plugin trong `pom.x
 
 Nếu lớp `MainFrame` không có phương thức `main`, hãy chạy lớp khởi động thực tế của dự án.
 
-### Bước 5. Xử lý lỗi thường gặp
+### Bước 6. Xử lý lỗi thường gặp
 
 - **Không tìm thấy MySQL Connector/J:** kiểm tra khai báo dependency trong `pom.xml`, sau đó tải lại dự án Maven.
 - **Access denied:** kiểm tra tên tài khoản, mật khẩu và quyền truy cập schema.
@@ -121,7 +188,7 @@ Nếu lớp `MainFrame` không có phương thức `main`, hãy chạy lớp kh�
 - **Could not find or load main class:** kiểm tra package, tên lớp chính và cấu trúc thư mục mã nguồn.
 - **Không có dữ liệu hiển thị:** kiểm tra dữ liệu mẫu, schema kết nối và các câu truy vấn trong ứng dụng.
 
-## 8. Dữ liệu mẫu
+## 7. Dữ liệu mẫu
 
 Dự án sử dụng dữ liệu mẫu để phục vụ kiểm thử:
 
@@ -131,7 +198,7 @@ Dự án sử dụng dữ liệu mẫu để phục vụ kiểm thử:
 
 Dữ liệu mẫu không đại diện cho thông tin cá nhân có thật.
 
-## 9. Kiểm thử chức năng
+## 8. Kiểm thử chức năng
 
 Sau khi khởi động ứng dụng và kết nối cơ sở dữ liệu thành công, thực hiện các trường hợp sau:
 
@@ -153,7 +220,7 @@ Sau khi khởi động ứng dụng và kết nối cơ sở dữ liệu thành 
 
 Kết quả kiểm thử cần được ghi nhận dựa trên việc chạy ứng dụng thực tế.
 
-## 10. Các ràng buộc và lưu ý
+## 9. Các ràng buộc và lưu ý
 
 - JDBC sử dụng `PreparedStatement` để truyền tham số vào câu lệnh SQL.
 - Nghiệp vụ xếp phòng sử dụng transaction và `SELECT ... FOR UPDATE` để hạn chế xung đột khi nhiều thao tác xếp phòng diễn ra đồng thời.
@@ -161,7 +228,7 @@ Kết quả kiểm thử cần được ghi nhận dựa trên việc chạy ứ
 - Cách tính tiền phòng theo tháng, làm tròn ngày, chuyển phòng giữa tháng và miễn giảm cần được thống nhất theo yêu cầu của giảng viên trước khi triển khai chức năng hóa đơn.
 - Giao diện CRUD cho các bảng dịch vụ, sử dụng dịch vụ, xe tháng và khách thăm cần được tích hợp thêm nếu thuộc phạm vi yêu cầu cuối cùng của nhóm.
 
-## 11. Đóng góp và phát triển
+## 10. Đóng góp và phát triển
 
 Dự án có thể tiếp tục được mở rộng theo các hướng:
 
@@ -174,4 +241,3 @@ Dự án có thể tiếp tục được mở rộng theo các hướng:
 ---
 
 **Trạng thái dự án:** Cần chạy thử trên môi trường thực tế để xác nhận việc cài đặt, kết nối cơ sở dữ liệu và các chức năng trước khi nghiệm thu.
->>>>>>> origin/main
