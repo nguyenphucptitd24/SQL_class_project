@@ -1,4 +1,4 @@
--- CAC TRUY VAN PHUC VU PHAN CUA BIEN
+-- CAC TRUY VAN PHUC VU CUA BIEN
 USE KTX;
 
 -- 1. Danh sach sinh vien va phong dang o
