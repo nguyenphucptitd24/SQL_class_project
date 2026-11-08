@@ -1,242 +1,291 @@
-# Task BreakDown ( Phân Chia Nhiệm vụ) : 
-## BIÊN : 
-###  1. Phạm vi phụ trách
-- Thiết kế CSDL tổng thể và thống nhất khóa chính/khóa ngoại dùng chung.
-- Module Sinh viên: xem danh sách, tìm kiếm, thêm, sửa, xóa có kiểm soát.
-- Module Phòng: xem danh sách, thêm/sửa phòng, theo dõi số người đang ở và số chỗ trống.
-- Module Thuê phòng: xếp phòng, trả phòng, lưu lịch sử thuê.
-- Kiểm tra sức chứa phòng, tránh xếp một sinh viên vào nhiều phòng cùng lúc; khóa bản ghi phòng trong transaction khi xếp.
-- Chuẩn bị sơ đồ EER và truy vấn hỗ trợ phần cá nhân.
-
-### 2. Các bảng cốt lõi
-- `SinhVien(MaSV PK, SoCMT UNIQUE, NgaySinh, Lop, QueQuan)`
-- `Phong(SoPhong PK, LoaiPhong, DonGia, SoNguoiToiDa)`
-- `ThuePhong(MaThue PK, MaSV FK, SoPhong FK, NgayBatDau, NgayKetThuc)`
-
-`NgayKetThuc IS NULL` được quy ước là hợp đồng đang có hiệu lực. Một sinh viên có nhiều bản ghi thuê theo thời gian, nhưng ứng dụng chỉ cho phép một bản ghi đang hiệu lực. Mỗi phòng có thể có nhiều lượt thuê theo thời gian.
-
-### 3. Các bảng mở rộng để tích hợp nhóm
-Schema tổng thể có thêm `DichVu`, `SuDungDichVu`, `XeThang`, `LuotXe`, `Khach`, `LuotTham`. Đây là cấu trúc tích hợp để các thành viên phụ trách module riêng kết nối theo `MaSV`; không có nghĩa Biên phụ trách triển khai giao diện các module đó.
-
-### 4. Quy tắc nghiệp vụ chính
-1. Mã sinh viên và số CMT là duy nhất.
-2. Đơn giá phòng không âm; sức chứa phải lớn hơn 0.
-3. Ngày kết thúc thuê không được trước ngày bắt đầu.
-4. Không xếp phòng nếu sinh viên không tồn tại, đã có hợp đồng đang ở, hoặc phòng đã đủ sức chứa.
-5. Không giảm sức chứa phòng xuống thấp hơn số người đang ở.
-6. Xóa sinh viên/phòng đang được lịch sử thuê tham chiếu sẽ bị khóa ngoại ngăn lại, nhằm bảo toàn lịch sử.
-7. Tiền phòng tính tròn tháng: chỉ cần thời gian thuê giao với tháng lập hóa đơn thì tính đủ đơn giá tháng đó. Cần thống nhất thêm quy tắc khi chuyển phòng trong tháng nếu giảng viên yêu cầu chi tiết hơn.
-
-### 5. Chạy chương trình
-- Cần JDK 25+, MySQL 8+ và NetBeans có hỗ trợ Maven.
-- Chạy `database/01_ktx_schema.sql` trong MySQL Workbench.
-- Cấu hình `KTX_DB_URL`, `KTX_DB_USER`, `KTX_DB_PASSWORD` nếu không dùng tài khoản mặc định.
-- Mở project Maven `KTXManagement` trong NetBeans và chạy `ktx.ui.MainFrame`.
-- Nếu tài khoản MySQL không có quyền `CREATE DATABASE`, chọn schema được cấp bởi giảng viên, bỏ qua `CREATE DATABASE`/`USE KTX` và chạy các lệnh tạo bảng bên dưới.
-
-### 6. Kiểm thử đề xuất
-- Thêm sinh viên có mã trùng hoặc số CMT trùng: phải báo lỗi.
-- Tìm kiếm theo mã sinh viên, lớp, quê quán.
-- Thêm phòng với sức chứa 0 hoặc đơn giá âm: phải bị từ chối.
-- Xếp một sinh viên vào phòng còn chỗ: thành công.
-- Xếp sinh viên đã có hợp đồng đang ở vào phòng khác: bị từ chối.
-- Xếp sinh viên vào phòng đầy: bị từ chối.
-- Trả phòng với ngày trước ngày bắt đầu: bị từ chối.
-- Giảm sức chứa phòng thấp hơn số người đang ở: bị từ chối ở giao diện.
 # TASK BREAKDOWN — KTX MANAGEMENT
 
-## 1. Phân CHia 3 modul và 1 tổng hợp 
+## 1. Mục tiêu và nguyên tắc phân công
 
-Phân chia công việc cho 4 thành viên phụ trách các module mở rộng của hệ thống quản lý ký túc xá, sử dụng Java Swing, JDBC và MySQL.
+Dự án sử dụng Java Swing, JDBC và MySQL. Mỗi thành viên phụ trách module đã được giao, bao gồm: thiết kế/cập nhật CSDL, nghiệp vụ, truy vấn SQL, Model, Repository/DAO, Service, giao diện Java Swing và kiểm thử.
 
-Mỗi thành viên chịu trách nhiệm thiết kế CSDL liên quan, xử lý nghiệp vụ, viết truy vấn SQL, phát triển giao diện và kiểm thử module của mình.
+Nguyên tắc:
+- Thành viên tiếp tục phụ trách module nền tảng mình đã làm và phát triển thêm module mới có liên quan.
+- Dùng chung một schema MySQL; thống nhất PK/FK và tên cột trước khi tích hợp.
+- Không tự ý sửa bảng do người khác phụ trách.
+- Mọi thay đổi schema phải cập nhật script SQL và thông báo cho nhóm.
+- Giao diện gọi Service; không viết SQL trực tiếp trong sự kiện nút bấm.
+- Mỗi thành viên làm trên branch riêng, tạo Pull Request, không push trực tiếp lên `main`.
 
 ## 2. Phân công công việc
 
-### Thành viên 2 — Mạnh: Quản lý dịch vụ và hóa đơn
+## BIÊN — Thành viên 1 / Trưởng nhóm
+**Module nền tảng: Sinh viên – Phòng – Thuê phòng**
 
-**Mục tiêu:** Xây dựng chức năng quản lý dịch vụ, ghi nhận việc sử dụng dịch vụ và tổng hợp tiền dịch vụ theo tháng.
+### Phạm vi phụ trách
+- Thiết kế CSDL tổng thể, thống nhất PK/FK và quan hệ giữa các module.
+- Quản lý sinh viên: danh sách, tìm kiếm, thêm, sửa, xóa có kiểm soát.
+- Quản lý phòng: danh sách, thêm/sửa, đơn giá, loại phòng, sức chứa, số người hiện tại.
+- Quản lý thuê phòng: xếp phòng, trả phòng, lưu lịch sử thuê.
+- Kiểm tra sức chứa và một sinh viên chỉ có một hợp đồng đang hiệu lực.
+- Chuẩn bị EER và truy vấn SQL phần cốt lõi.
+- Điều phối tích hợp schema và xử lý xung đột khi các module cùng cần cập nhật bảng gốc.
 
-**Task 2.1 — Thiết kế cơ sở dữ liệu**
-- Xây dựng bảng `DichVu` lưu thông tin dịch vụ.
-- Xây dựng bảng `SuDungDichVu` lưu lịch sử sử dụng dịch vụ của sinh viên.
-- Thiết kế khóa chính, khóa ngoại và các ràng buộc dữ liệu phù hợp.
-- Lưu lại đơn giá áp dụng tại thời điểm sử dụng dịch vụ để bảo toàn lịch sử tính tiền.
+### Các bảng chính
+- `SinhVien(MaSV PK, SoCMT UNIQUE, NgaySinh, Lop, QueQuan, ...)`
+- `Phong(SoPhong PK, LoaiPhong, DonGia, SoNguoiToiDa, SoNguoiHienTai, ...)`
+- `ThuePhong(MaThue PK, MaSV FK, SoPhong FK, NgayBatDau, NgayKetThuc, ...)`
 
-**Task 2.2 — Xử lý nghiệp vụ**
-- Thêm, sửa, xóa và tra cứu dịch vụ theo các quy tắc đã thống nhất.
-- Ghi nhận mã sinh viên, mã dịch vụ, số lượng, thời gian sử dụng và đơn giá áp dụng.
-- Tính thành tiền từng lần sử dụng dịch vụ.
-- Tổng hợp tiền dịch vụ theo từng sinh viên trong từng tháng.
-- Kiểm tra dữ liệu đầu vào hợp lệ.
+### Quy tắc nghiệp vụ
+1. Mã sinh viên và số CMT/CCCD không trùng.
+2. Đơn giá không âm; sức chứa lớn hơn 0.
+3. Ngày kết thúc thuê không trước ngày bắt đầu.
+4. Không xếp phòng nếu sinh viên không tồn tại, đã có hợp đồng đang hiệu lực hoặc phòng đã đầy.
+5. Không giảm sức chứa thấp hơn số người hiện tại.
+6. Lưu lịch sử thuê; không xóa bản ghi thuê cũ khi sinh viên trả phòng.
+7. Dùng transaction/khóa bản ghi phòng khi xếp phòng nếu có khả năng nhiều thao tác đồng thời.
 
-**Task 2.3 — Truy vấn SQL**
-- Truy vấn lịch sử sử dụng dịch vụ của sinh viên.
-- Tính tổng tiền dịch vụ của từng sinh viên theo tháng.
-- Thống kê doanh thu từng dịch vụ theo tháng.
-- Kiểm tra kết quả truy vấn với dữ liệu mẫu.
-
-**Task 2.4 — Giao diện Java Swing**
-- Xây dựng giao diện quản lý danh sách dịch vụ.
-- Xây dựng giao diện ghi nhận sinh viên sử dụng dịch vụ.
-- Xây dựng giao diện xem chi tiết và tổng tiền dịch vụ theo tháng.
-- Hiển thị dữ liệu và thông báo lỗi rõ ràng.
-
-**Sản phẩm bàn giao**
-- Script SQL tạo bảng và dữ liệu mẫu.
-- Các lớp Model, Repository/DAO, Service và giao diện liên quan.
-- Các truy vấn thống kê doanh thu.
-- Hướng dẫn sử dụng và kết quả kiểm thử module.
+### Sản phẩm bàn giao
+- Script SQL schema cốt lõi và phần tích hợp.
+- EER/ERD cập nhật.
+- Model, Repository/DAO, Service và giao diện Sinh viên/Phòng/Thuê phòng.
+- Truy vấn SQL và dữ liệu kiểm thử.
+- Hướng dẫn tích hợp các module dùng chung.
 
 ---
 
-### Thành viên 3 — Thiện: Quản lý xe tháng
+## MẠNH — Thành viên 2
+**Module nền tảng: Dịch vụ – Sử dụng dịch vụ**  
+**Module bổ sung: Quản lý hóa đơn tháng**
 
-**Mục tiêu:** Quản lý thông tin xe đăng ký vé tháng, lịch sử gửi xe và tính phí phát sinh.
+### Mục tiêu
+Quản lý danh mục dịch vụ, ghi nhận việc sử dụng và lập hóa đơn tháng gồm tiền phòng, điện, nước, dịch vụ; theo dõi tình trạng thanh toán.
 
-**Task 3.1 — Thiết kế cơ sở dữ liệu**
-- Xây dựng bảng lưu thông tin xe đăng ký vé tháng và chủ xe.
-- Xây dựng bảng ghi nhận lịch sử lấy/gửi xe.
-- Thiết kế khóa chính, khóa ngoại và ràng buộc dữ liệu.
-- Liên kết thông tin xe với sinh viên đăng ký.
+### Task 2.1 — Dịch vụ và sử dụng dịch vụ
+- Quản lý danh sách dịch vụ: thêm, sửa, tra cứu và cập nhật trạng thái cung cấp.
+- Ghi nhận sinh viên sử dụng dịch vụ, số lượng, thời điểm và đơn giá áp dụng.
+- Lưu đơn giá tại thời điểm sử dụng để không làm thay đổi lịch sử khi giá dịch vụ được cập nhật.
+- Tính thành tiền từng lần sử dụng.
+- Tra cứu lịch sử sử dụng theo sinh viên, dịch vụ và thời gian.
+- Tổng hợp chi phí dịch vụ theo sinh viên trong tháng.
 
-**Task 3.2 — Xử lý nghiệp vụ**
-- Thêm, sửa, tra cứu thông tin xe và vé tháng.
-- Ghi nhận lịch sử lấy/gửi xe theo ngày, giờ.
-- Kiểm tra mỗi sinh viên được đăng ký tối đa 2 xe.
-- Áp dụng quy tắc miễn phí 2 lượt mỗi ngày và tính 3.000 đồng cho mỗi lượt phát sinh vượt mức miễn phí.
-- Kiểm tra lượt xe và tránh ghi nhận dữ liệu không hợp lệ.
-- Tổng hợp phí phát sinh theo sinh viên và thời gian.
+### Task 2.2 — Thiết kế CSDL hóa đơn
+- Tiếp tục sử dụng `DichVu` và `SuDungDichVu` hiện có.
+- Xây dựng bảng `HoaDon` với các trường dự kiến:
+  - `MaHD BIGINT` – khóa chính.
+  - `MaSV` – sinh viên được lập hóa đơn.
+  - `SoPhong` – phòng tương ứng trong kỳ.
+  - `ThangHoaDon DATE` – kỳ hóa đơn, thống nhất cách lưu ngày đầu tháng.
+  - `TienPhong DECIMAL(12,2)`.
+  - `TienDien DECIMAL(12,2)`.
+  - `TienNuoc DECIMAL(12,2)`.
+  - `TienDichVu DECIMAL(12,2)`.
+  - `TongTien DECIMAL(12,2)`.
+  - `TrangThaiThanhToan VARCHAR(20)`.
+  - `NgayLap DATETIME`, `NgayThanhToan DATETIME`, `GhiChu VARCHAR(255)`.
+- Thiết kế PK/FK, chỉ mục và ràng buộc chống lập hóa đơn trùng kỳ theo quy tắc nhóm thống nhất.
+- Thống nhất với Thiện xem phí xe có được gộp vào `TienDichVu` hay cần tách thành khoản riêng; không cộng hai lần.
 
-**Task 3.3 — Truy vấn SQL**
-- Tra cứu xe theo sinh viên.
-- Xem lịch sử lấy/gửi xe theo ngày hoặc tháng.
-- Thống kê số lượt miễn phí và lượt tính phí.
-- Tính tổng phí phát sinh theo sinh viên trong tháng.
+### Task 2.3 — Xử lý nghiệp vụ hóa đơn
+- Lập hóa đơn theo sinh viên/phòng và tháng.
+- Lấy tiền phòng từ hợp đồng thuê trong tháng theo quy tắc tính tiền nhóm đã thống nhất.
+- Nhận hoặc nhập chỉ số điện/nước theo quy trình nhóm thống nhất; lưu thành tiền tương ứng.
+- Tổng hợp tiền dịch vụ từ `SuDungDichVu`.
+- Tính `TongTien` bằng tổng các khoản thành phần.
+- Theo dõi trạng thái: chưa thanh toán/đã thanh toán (có thể bổ sung quá hạn nếu nhóm thống nhất).
+- Khi thanh toán, cập nhật trạng thái và `NgayThanhToan`.
+- Không cho phép thanh toán hóa đơn đã thanh toán lần nữa hoặc tạo hóa đơn trùng kỳ.
 
-**Task 3.4 — Giao diện Java Swing**
-- Xây dựng giao diện quản lý xe đăng ký vé tháng.
-- Xây dựng giao diện ghi nhận lượt lấy/gửi xe.
-- Xây dựng giao diện tra cứu lịch sử và phí phát sinh.
-- Hiển thị thông báo khi vượt giới hạn đăng ký hoặc phát sinh phí.
+### Task 2.4 — Truy vấn SQL
+- Danh sách hóa đơn theo tháng.
+- Hóa đơn theo sinh viên/phòng.
+- Tổng doanh thu theo tháng.
+- Danh sách hóa đơn chưa thanh toán.
+- Chi tiết từng khoản tiền trong hóa đơn.
+- Thống kê tổng tiền dịch vụ theo tháng.
+- Kiểm tra tổng tiền hóa đơn khớp dữ liệu chi tiết.
 
-**Sản phẩm bàn giao**
-- Script SQL tạo bảng và dữ liệu mẫu.
-- Các lớp Model, Repository/DAO, Service và giao diện liên quan.
-- Các truy vấn thống kê lượt xe và phí phát sinh.
-- Hướng dẫn sử dụng và kết quả kiểm thử module.
+### Task 2.5 — Giao diện Java Swing
+- Màn hình quản lý/lập hóa đơn tháng.
+- Màn hình xem chi tiết hóa đơn.
+- Tìm kiếm theo mã sinh viên, phòng, tháng, trạng thái.
+- Chức năng xác nhận thanh toán.
+- Hiển thị rõ tiền phòng, điện, nước, dịch vụ và tổng tiền.
 
-**Lưu ý:** Nhóm phải thống nhất cách xác định một lượt xe, thời điểm tính phí và cách xử lý lượt gửi xe qua ngày trước khi triển khai.
-
----
-
-### Thành viên 4 — Nam: Quản lý khách thăm
-
-**Mục tiêu:** Quản lý thông tin khách đến thăm và lịch sử thăm sinh viên trong ký túc xá.
-
-**Task 4.1 — Thiết kế cơ sở dữ liệu**
-- Xây dựng bảng lưu thông tin khách thăm.
-- Xây dựng bảng ghi nhận từng lần khách đến thăm.
-- Liên kết lần thăm với sinh viên được thăm.
-- Thiết kế khóa chính, khóa ngoại và các ràng buộc dữ liệu phù hợp.
-
-**Task 4.2 — Xử lý nghiệp vụ**
-- Thêm và tra cứu thông tin khách thăm.
-- Ghi nhận sinh viên được thăm, ngày và thời gian đến.
-- Hiển thị lịch sử các lần thăm.
-- Kiểm tra dữ liệu bắt buộc và định dạng thời gian.
-- Hỗ trợ tìm kiếm theo thông tin khách hoặc sinh viên.
-
-**Task 4.3 — Truy vấn SQL**
-- Tra cứu lịch sử thăm một sinh viên.
-- Thống kê khách thăm theo tuần và tháng.
-- Đếm số lần mỗi khách đến thăm.
-- Thống kê số lượt khách đến thăm theo từng sinh viên hoặc khoảng thời gian.
-
-**Task 4.4 — Giao diện Java Swing**
-- Xây dựng giao diện nhập thông tin khách.
-- Xây dựng giao diện ghi nhận lượt thăm.
-- Xây dựng giao diện tra cứu lịch sử.
-- Hiển thị kết quả tìm kiếm và thống kê.
-
-**Sản phẩm bàn giao**
-- Script SQL tạo bảng và dữ liệu mẫu.
-- Các lớp Model, Repository/DAO, Service và giao diện liên quan.
-- Các truy vấn thống kê khách thăm.
-- Hướng dẫn sử dụng và kết quả kiểm thử module.
+### Sản phẩm bàn giao
+- SQL tạo bảng `HoaDon`, khóa ngoại, chỉ mục và dữ liệu mẫu.
+- Model, Repository/DAO, Service và giao diện hóa đơn.
+- Các truy vấn thống kê và tra cứu.
+- Kết quả kiểm thử lập hóa đơn, chống trùng và thanh toán.
+- Hướng dẫn sử dụng module.
 
 ---
 
-### Thành viên 5 — Phúc: Giao diện tổng thể và tích hợp
+## THIỆN — Thành viên 3
+**Module nền tảng: Xe tháng – Lượt xe**  
+**Module bổ sung: Quản lý lưu trú và trạng thái ở**
 
-**Mục tiêu:** Xây dựng màn hình chính, thống nhất cách điều hướng và tích hợp các module thành một ứng dụng hoàn chỉnh.
+### Mục tiêu
+Tiếp tục quản lý xe tháng; đồng thời xây dựng chức năng theo dõi trạng thái lưu trú, thời hạn hợp đồng và tiền cọc của sinh viên.
 
-**Task 5.1 — Thiết kế giao diện tổng thể**
-- Xây dựng màn hình chính của ứng dụng.
-- Thiết kế menu hoặc thanh điều hướng giữa các module.
-- Thống nhất bố cục, tiêu đề, bảng dữ liệu, nút chức năng và thông báo.
-- Đảm bảo giao diện dễ sử dụng và nhất quán.
+### Task 3.1 — Duy trì module xe tháng
+- Quản lý xe đăng ký vé tháng và chủ xe.
+- Ghi nhận lịch sử lấy/gửi xe.
+- Kiểm tra tối đa 2 xe đang đăng ký trên mỗi sinh viên.
+- Áp dụng quy tắc miễn phí 2 lượt/ngày và 3.000 đồng/lượt vượt mức theo quy định nhóm.
+- Thống kê lượt miễn phí, lượt tính phí và tổng phí phát sinh.
+- Trao đổi với Mạnh để thống nhất cách chuyển phí xe sang hóa đơn, tránh tính trùng.
 
-**Task 5.2 — Tích hợp module**
-- Tích hợp module quản lý sinh viên và phòng của trưởng nhóm.
-- Tích hợp module dịch vụ và hóa đơn của Mạnh.
-- Tích hợp module xe tháng của Thiện.
-- Tích hợp module khách thăm của Nam.
-- Kết nối các màn hình với lớp nghiệp vụ tương ứng.
-- Kiểm tra tính tương thích giữa các module và cơ sở dữ liệu chung.
+### Task 3.2 — Thiết kế CSDL lưu trú/hợp đồng
+- Rà soát bảng `SinhVien`, `Phong`, `ThuePhong` hiện tại trước khi thêm cột.
+- Đề xuất bổ sung vào `SinhVien` nếu schema chưa có:
+  - `NgayVaoKTX DATE`.
+  - `NgayRaKTX DATE`.
+  - `TrangThaiLuuTru VARCHAR(20)`.
+- Đề xuất bổ sung vào `ThuePhong` nếu schema chưa có:
+  - `TienCoc DECIMAL(12,2)`.
+  - `TrangThaiHopDong VARCHAR(20)` hoặc `TrangThaiThue VARCHAR(20)` – nhóm phải chọn một trường hoặc quy định rõ mục đích khác nhau trước khi tạo.
+  - `NgayKyHopDong DATE`.
+  - `NgayHetHanHopDong DATE`.
+  - `SoNguoiThamGia INT`.
+- `Phong.SoNguoiHienTai` đã thuộc phần dữ liệu phòng cốt lõi; không tạo thêm cột trùng.
+- Thiết kế ràng buộc ngày tháng, tiền cọc không âm và số người tham gia hợp lệ.
 
-**Task 5.3 — Kiểm thử tổng thể**
-- Kiểm tra chức năng của từng module sau tích hợp.
-- Kiểm tra luồng dữ liệu giữa các bảng có liên quan.
-- Kiểm tra các trường hợp dữ liệu sai, thiếu hoặc trùng lặp.
-- Phát hiện và phối hợp sửa lỗi giao diện, lỗi kết nối và lỗi tích hợp.
-- Kiểm tra khả năng chạy ứng dụng từ đầu trên môi trường phát triển.
+### Task 3.3 — Xử lý nghiệp vụ lưu trú
+- Theo dõi sinh viên đang ở, đã trả phòng, chờ duyệt hoặc hết hạn lưu trú.
+- Theo dõi hợp đồng chờ duyệt, đang hiệu lực, đã kết thúc hoặc hết hạn.
+- Ghi nhận ngày ký, ngày bắt đầu, ngày hết hạn và tiền cọc.
+- Tra cứu danh sách sinh viên đang ở theo phòng.
+- Tra cứu hợp đồng sắp hết hạn/hết hạn.
+- Khi duyệt hợp đồng, kiểm tra sinh viên và phòng hợp lệ, phòng còn sức chứa.
+- Khi trả phòng, cập nhật ngày kết thúc và trạng thái hợp đồng/lưu trú; giữ nguyên lịch sử.
+- Phối hợp với Biên để cập nhật số người hiện tại, tránh hai nơi cùng tự ý tăng/giảm số người.
+- Không lưu trùng dữ liệu nếu trạng thái hoặc ngày có thể suy ra đáng tin cậy từ `ThuePhong`; thống nhất nguồn dữ liệu chuẩn với Biên.
 
-**Task 5.4 — Hoàn thiện tài liệu**
-- Hỗ trợ hoàn thiện hướng dẫn cài đặt và chạy dự án.
-- Cập nhật README.md trên GitHub theo trạng thái thực tế.
-- Hướng dẫn cách cấu hình MySQL và chạy ứng dụng bằng VS Code.
-- Tổng hợp các chức năng đã hoàn thành, còn thiếu và kết quả kiểm thử.
+### Task 3.4 — Truy vấn SQL
+- Danh sách sinh viên đang lưu trú.
+- Danh sách sinh viên đã trả phòng.
+- Danh sách hợp đồng chờ duyệt/đang hiệu lực/hết hạn.
+- Hợp đồng sắp hết hạn trong một khoảng thời gian.
+- Tra cứu tiền cọc theo sinh viên/phòng.
+- Thống kê số người đang ở từng phòng và đối chiếu sức chứa.
 
-**Sản phẩm bàn giao**
-- Màn hình chính và hệ thống điều hướng.
-- Các module đã tích hợp.
-- Danh sách lỗi và kết quả kiểm thử tổng thể.
-- README.md và hướng dẫn chạy ứng dụng đã cập nhật.
+### Task 3.5 — Giao diện Java Swing
+- Màn hình theo dõi trạng thái lưu trú.
+- Màn hình quản lý hợp đồng và tiền cọc.
+- Chức năng duyệt hợp đồng, kết thúc hợp đồng/trả phòng theo quyền nghiệp vụ.
+- Bộ lọc theo phòng, sinh viên, trạng thái và thời hạn.
+- Cảnh báo hợp đồng sắp hết hạn hoặc phòng đã đủ sức chứa.
 
-## 3. Quy ước phối hợp và tích hợp
+### Sản phẩm bàn giao
+- SQL cập nhật schema lưu trú sau khi được Biên duyệt.
+- Model, Repository/DAO, Service và giao diện quản lý lưu trú.
+- Truy vấn danh sách đang ở, hợp đồng hết hạn và tiền cọc.
+- Kết quả kiểm thử duyệt, hết hạn, trả phòng và kiểm tra sức chứa.
+- Tiếp tục bàn giao module xe tháng đã có.
 
-### 3.1. Quy ước cơ sở dữ liệu
-- Thống nhất tên bảng, tên cột, kiểu dữ liệu, khóa chính và khóa ngoại trước khi tích hợp.
-- Các module phải dùng chung schema cơ sở dữ liệu KTX.
-- Không tự ý sửa hoặc xóa bảng do thành viên khác phụ trách khi chưa trao đổi.
-- Mọi thay đổi cấu trúc CSDL phải được cập nhật trong script SQL và thông báo cho cả nhóm.
-- Không lưu mật khẩu MySQL cá nhân trong mã nguồn đưa lên GitHub.
+---
 
-### 3.2. Quy ước mã nguồn
-- Mỗi thành viên phát triển module trong nhánh Git riêng.
-- Không tự ý đẩy trực tiếp lên nhánh `main`.
-- Hoàn thành chức năng và kiểm thử cơ bản trước khi tạo Pull Request.
-- Không chỉnh sửa trực tiếp file của thành viên khác nếu chưa thống nhất.
-- Sử dụng `PreparedStatement` cho truy vấn có tham số.
-- Tách biệt Model, Repository/DAO, Service và giao diện khi phù hợp với cấu trúc dự án.
+## NAM — Thành viên 4
+**Module nền tảng: Khách thăm – Lượt thăm**  
+**Module bổ sung: Quản lý báo hỏng và bảo trì phòng**
 
-### 3.3. Quy ước giao diện
-- Các module dùng chung phong cách giao diện.
-- Giao diện gọi lớp Service để xử lý nghiệp vụ, tránh viết truy vấn SQL trực tiếp trong các thành phần giao diện.
-- Thống nhất cách hiển thị thông báo thành công, thất bại và lỗi nhập liệu.
-- Không tích hợp module khi chưa xác định rõ cách khởi tạo và gọi màn hình.
+### Mục tiêu
+Tiếp tục quản lý khách thăm; xây dựng chức năng để sinh viên báo sự cố phòng và theo dõi quá trình xử lý/bảo trì.
 
-## 4. Thứ tự thực hiện đề xuất
+### Task 4.1 — Duy trì module khách thăm
+- Quản lý thông tin khách đến thăm.
+- Ghi nhận sinh viên được thăm, ngày/giờ đến và lịch sử từng lượt thăm.
+- Tra cứu lịch sử theo khách, sinh viên và thời gian.
+- Thống kê lượt khách thăm theo ngày/tháng.
 
-1. **Giai đoạn 1 — Thống nhất thiết kế:** Chốt bảng dữ liệu, quan hệ, quy tắc nghiệp vụ và cấu trúc lớp.
-2. **Giai đoạn 2 — Phát triển độc lập:** Mạnh, Thiện và Nam triển khai các module riêng; Phúc chuẩn bị màn hình chính và quy ước giao diện.
-3. **Giai đoạn 3 — Kiểm thử module:** Mỗi thành viên tự kiểm thử bằng dữ liệu mẫu và sửa lỗi.
-4. **Giai đoạn 4 — Tích hợp:** Tạo Pull Request, rà soát thay đổi và tích hợp vào nhánh chung.
-5. **Giai đoạn 5 — Kiểm thử tổng thể:** Kiểm tra CSDL, giao diện, nghiệp vụ và các trường hợp lỗi.
-6. **Giai đoạn 6 — Hoàn thiện:** Cập nhật README.md, hướng dẫn chạy ứng dụng và chuẩn bị báo cáo.
+### Task 4.2 — Thiết kế CSDL báo hỏng
+- Xây dựng bảng `BaoHong` dự kiến gồm:
+  - `MaBaoHong BIGINT` – khóa chính.
+  - `SoPhong` – khóa ngoại tới `Phong`.
+  - `MaSV` – khóa ngoại tới `SinhVien`, có thể cho phép NULL nếu sự cố do nhân viên phát hiện.
+  - `LoaiSuCo VARCHAR(100)`.
+  - `MoTa TEXT`.
+  - `MucDo VARCHAR(20)`.
+  - `TrangThai VARCHAR(30)`.
+  - `NgayBao DATETIME`.
+  - `NgayXuLy DATETIME`.
+  - `NhanVienXuLy VARCHAR(100)`.
+- Thiết kế PK/FK, chỉ mục tra cứu theo phòng, trạng thái và ngày báo.
+- Rà soát cách lưu người báo và người xử lý; không lưu thông tin trùng lặp không cần thiết.
 
-## 5. Tiêu chí hoàn thành
+### Task 4.3 — Xử lý nghiệp vụ
+- Sinh viên tạo báo cáo sự cố cho phòng đang lưu trú.
+- Kiểm tra phòng tồn tại và sinh viên có liên quan đến phòng tại thời điểm báo.
+- Phân loại sự cố: điện, nước, thiết bị, vệ sinh hoặc loại khác.
+- Chọn mức độ: thấp, trung bình, cao/khẩn cấp theo danh mục thống nhất.
+- Theo dõi trạng thái: mới báo, đang xử lý, đã hoàn thành hoặc từ chối.
+- Ghi nhận nhân viên xử lý, ngày xử lý và mô tả kết quả.
+- Không cho phép ngày xử lý trước ngày báo.
+- Lưu lịch sử xử lý, không xóa báo cáo đã hoàn thành.
 
-Một module được xem là hoàn thành khi:
-- Có thiết kế CSDL và script SQL
+### Task 4.4 — Truy vấn SQL
+- Danh sách báo hỏng mới tiếp nhận.
+- Danh sách sự cố đang xử lý/chưa hoàn thành.
+- Lịch sử báo hỏng theo phòng.
+- Lịch sử báo hỏng theo sinh viên.
+- Thống kê sự cố theo loại, mức độ và tháng.
+- Thời gian xử lý trung bình nếu dữ liệu ngày báo/ngày xử lý đầy đủ.
+
+### Task 4.5 — Giao diện Java Swing
+- Màn hình tạo báo hỏng.
+- Màn hình danh sách và lọc báo cáo.
+- Màn hình cập nhật trạng thái xử lý.
+- Màn hình xem chi tiết và lịch sử bảo trì.
+- Hiển thị cảnh báo với sự cố mức độ cao/khẩn cấp.
+
+### Sản phẩm bàn giao
+- SQL tạo bảng `BaoHong`, khóa ngoại và dữ liệu mẫu.
+- Model, Repository/DAO, Service và giao diện báo hỏng/bảo trì.
+- Các truy vấn tra cứu và thống kê.
+- Kết quả kiểm thử gửi báo, phân công xử lý, hoàn thành và tra cứu.
+- Tiếp tục bàn giao module khách thăm đã có.
+
+---
+
+## 3. Phân quyền chỉnh sửa bảng và phối hợp
+
+| Bảng/nhóm bảng | Người phụ trách chính | Người phối hợp |
+|---|---|---|
+| `SinhVien`, `Phong`, `ThuePhong` | Biên | Thiện, Nam, Mạnh được đọc và đề xuất thay đổi |
+| `DichVu`, `SuDungDichVu`, `HoaDon` | Mạnh | Biên, Thiện |
+| `XeThang`, `LuotXe` | Thiện | Mạnh |
+| Các bảng lưu trú/hợp đồng mở rộng | Thiện triển khai nghiệp vụ | Biên duyệt thay đổi bảng gốc |
+| `Khach`, `LuotTham`, `BaoHong` | Nam | Biên duyệt FK tới bảng gốc |
+
+**Quy tắc quan trọng:** Người phụ trách module không có nghĩa là được tự ý thay đổi cấu trúc bảng gốc. Ví dụ, Thiện đề xuất thêm trường vào `ThuePhong` thì phải thống nhất với Biên trước khi sửa schema; Mạnh cần lấy dữ liệu thuê phòng nhưng không tự sửa bảng `ThuePhong`.
+
+## 4. Quy ước tích hợp mã nguồn
+
+- Mỗi thành viên làm trên branch riêng, ví dụ:
+  - `feature/bien-core`
+  - `feature/manh-invoices`
+  - `feature/thien-residence`
+  - `feature/nam-maintenance`
+- Không push trực tiếp lên `main`.
+- Mỗi Pull Request cần nêu rõ file SQL, class mới/sửa, chức năng và cách kiểm thử.
+- Dùng `PreparedStatement` cho truy vấn có tham số.
+- Tách Model, Repository/DAO, Service và UI.
+- Không để thông tin mật khẩu MySQL trong source code.
+- Trước khi merge phải chạy thử với schema chung và dữ liệu mẫu.
+
+## 5. Thứ tự triển khai
+
+1. **Giai đoạn 1 – Chốt schema:** Biên rà soát database hiện tại; Mạnh, Thiện, Nam gửi danh sách bảng/cột cần thêm; cả nhóm thống nhất PK/FK.
+2. **Giai đoạn 2 – Phát triển module:** Mạnh làm hóa đơn; Thiện làm lưu trú; Nam làm báo hỏng/bảo trì; Biên duy trì phần lõi và điều phối schema.
+3. **Giai đoạn 3 – Kiểm thử riêng:** Mỗi người kiểm thử SQL, nghiệp vụ và giao diện module của mình.
+4. **Giai đoạn 4 – Tích hợp:** Tạo Pull Request, rà soát schema và tích hợp vào nhánh chung.
+5. **Giai đoạn 5 – Kiểm thử liên module:** Kiểm tra luồng hợp đồng → hóa đơn; dịch vụ → hóa đơn; xe → khoản phí; sinh viên/phòng → báo hỏng.
+6. **Giai đoạn 6 – Hoàn thiện:** Cập nhật README, ảnh giao diện, EER và kết quả kiểm thử.
+
+## 6. Tiêu chí hoàn thành module
+
+Một module chỉ được xem là hoàn thành khi:
+- Có script SQL tạo/cập nhật bảng và dữ liệu mẫu.
+- Có PK/FK và ràng buộc dữ liệu phù hợp.
+- Có Model, Repository/DAO, Service và giao diện.
+- Các chức năng thêm/sửa/xóa/tìm kiếm hoặc quy trình nghiệp vụ chạy đúng theo phạm vi.
+- Có truy vấn SQL phục vụ tra cứu/thống kê.
+- Đã kiểm thử trường hợp hợp lệ và không hợp lệ.
+- Tích hợp được với schema chung, không làm hỏng module khác.
+- Có hướng dẫn chạy và mô tả các chức năng đã thực hiện.
