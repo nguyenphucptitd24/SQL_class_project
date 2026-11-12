@@ -2,6 +2,7 @@ package ktx.ui;
 
 import ktx.model.KhoangThoiGian;
 import ktx.model.ThongKeKhachTham;
+import ktx.model.ThongKeNgay;
 import ktx.model.TongKhachTham;
 import ktx.model.TongSinhVienDuocTham;
 import ktx.service.KhachThamService;
@@ -29,6 +30,7 @@ class ThongKeTab extends JPanel {
         "Số CMT khách", "Họ tên khách", "Ngày sinh khách", "Tổng số lần đến", "Số sinh viên được thăm");
     private final DefaultTableModel mTheoSV = KhachThamUi.taoBang(
         "Mã SV", "Lớp", "Quê quán", "Số lượt được thăm", "Số khách khác nhau");
+    private final DefaultTableModel mTheoNgay = KhachThamUi.taoBang("Ngày", "Số lượt thăm", "Số khách khác nhau");
 
     ThongKeTab() {
         setLayout(new BorderLayout(8, 8));
@@ -52,6 +54,7 @@ class ThongKeTab extends JPanel {
         kq.addTab("Khách đến thăm từng sinh viên", new JScrollPane(new JTable(mKhachTheoSV)));
         kq.addTab("Tổng số lần mỗi khách đến", new JScrollPane(new JTable(mTheoKhach)));
         kq.addTab("Số lượt thăm của từng sinh viên", new JScrollPane(new JTable(mTheoSV)));
+        kq.addTab("Số lượt thăm theo ngày", new JScrollPane(new JTable(mTheoNgay)));
         add(kq, BorderLayout.CENTER);
 
         // Các nút chọn nhanh chỉ điền ngày rồi thống kê luôn; tuần luôn tính từ Thứ Hai đến Chủ nhật.
@@ -98,6 +101,10 @@ class ThongKeTab extends JPanel {
             for (TongSinhVienDuocTham t : c)
                 mTheoSV.addRow(new Object[]{t.sinhVien().maSV(), t.sinhVien().lop(), t.sinhVien().queQuan(),
                     t.soLuot(), t.soKhach()});
+
+            mTheoNgay.setRowCount(0);
+            for (ThongKeNgay t : service.thongKeTheoNgay(k))
+                mTheoNgay.addRow(new Object[]{KhachThamUi.NGAY.format(t.ngay()), t.soLuot(), t.soKhach()});
 
             tomTat.setText("Kỳ " + k.moTa() + ": " + tongLuot + " lượt thăm của " + b.size() + " khách.");
         });

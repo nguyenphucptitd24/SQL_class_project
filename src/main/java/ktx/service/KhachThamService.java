@@ -5,6 +5,7 @@ import ktx.model.Khach;
 import ktx.model.KhoangThoiGian;
 import ktx.model.LuotTham;
 import ktx.model.ThongKeKhachTham;
+import ktx.model.ThongKeNgay;
 import ktx.model.TongKhachTham;
 import ktx.model.TongSinhVienDuocTham;
 import ktx.repository.KhachThamRepository;
@@ -152,6 +153,11 @@ public class KhachThamService {
 
     public List<TongSinhVienDuocTham> thongKeTheoSinhVien(KhoangThoiGian k) throws SQLException {
         return repo.thongKeTheoSinhVien(k.tu(), k.den());
+    }
+
+    /** Số lượt thăm và số khách của từng ngày trong kỳ (chỉ hiện ngày có khách). */
+    public List<ThongKeNgay> thongKeTheoNgay(KhoangThoiGian k) throws SQLException {
+        return repo.thongKeTheoNgay(k.tu(), k.den());
     }
 
     // ----------------------------------------------------------------- Nội bộ

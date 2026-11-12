@@ -9,6 +9,7 @@
 --   * Kỳ dùng dạng nửa mở [đầu kỳ, đầu kỳ kế tiếp) để không bỏ sót lượt
 --     nào trong ngày cuối kỳ (ví dụ Chủ nhật 23:30).
 -- =====================================================================
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;   -- trùng collation của CSDL KTX, tránh lỗi "Illegal mix of collations" khi so sánh với hằng/biến
 USE KTX;
 
 -- ---------------------------------------------------------------------
@@ -136,3 +137,29 @@ WHERE lt.SoCMTKhach = @cmt
   AND lt.ThoiGianDen < COALESCE(@di, '9999-01-01 00:00:00')
   AND COALESCE(lt.ThoiGianDi, '9999-01-01 00:00:00') > @den;
 -- Kỳ vọng: có dòng (khách GUEST0001 còn ở KTX đến 16:30 ngày 20/10 và các lượt sau đó).
+
+-- ---------------------------------------------------------------------
+-- Q9. Số lượt thăm THEO NGÀY trong khoảng @tu_ngay .. @den_ngay (đã đặt ở Q5)
+--     Chỉ hiện những ngày có khách; lượt thăm tính vào ngày của giờ đến.
+-- ---------------------------------------------------------------------
+SELECT DATE(lt.ThoiGianDen) AS Ngay,
+       COUNT(*) AS SoLuotTham,
+       COUNT(DISTINCT lt.SoCMTKhach) AS SoKhachKhacNhau
+FROM LuotTham lt
+WHERE lt.ThoiGianDen >= @tu_ngay
+  AND lt.ThoiGianDen <  DATE_ADD(@den_ngay, INTERVAL 1 DAY)
+GROUP BY DATE(lt.ThoiGianDen)
+ORDER BY Ngay;
+-- Kỳ vọng 01-31/10/2026: 7 dòng (20/10, 22/10, 25/10, 26/10, 27/10, 28/10, 29/10), mỗi ngày 1 lượt / 1 khách.
+
+-- ---------------------------------------------------------------------
+-- Q10. Số lượt thăm THEO TỪNG THÁNG (toàn bộ dữ liệu)
+-- ---------------------------------------------------------------------
+SELECT DATE_FORMAT(lt.ThoiGianDen, '%Y-%m') AS Thang,
+       COUNT(*) AS SoLuotTham,
+       COUNT(DISTINCT lt.SoCMTKhach) AS SoKhachKhacNhau,
+       COUNT(DISTINCT lt.MaSV) AS SoSinhVienDuocTham
+FROM LuotTham lt
+GROUP BY DATE_FORMAT(lt.ThoiGianDen, '%Y-%m')
+ORDER BY Thang;
+-- Kỳ vọng: 2026-09 = 1 lượt (1 khách, 1 sinh viên); 2026-10 = 7 lượt (3 khách, 3 sinh viên).
