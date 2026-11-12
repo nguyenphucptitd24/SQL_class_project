@@ -1,265 +1,515 @@
 
-package ktx.repository;
+package ktx.service;
 
 import ktx.database.DatabaseConnection;
-import ktx.model.ThuePhong;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Statement;
+import java.time.LocalDate;
 
-public class ThuePhongRepository {
+public class ThuePhongService {
 
-    // Lay danh sach tat ca hop dong
-    public List<ThuePhong> findAll() throws SQLException {
-        String sql = """
-            SELECT MaThue, MaSV, SoPhong, NgayBatDau, NgayKetThuc,
-                   NgayKyHopDong, NgayHetHanHopDong, TienCoc
-            FROM ThuePhong
-            ORDER BY MaThue
-            """;
+    // =====================================================
+    // 1. XEP PHONG - GIU LAI CHUC NANG CU
+    // =====================================================
 
-        List<ThuePhong> list = new ArrayList<>();
+    public void xepPhong(String maSV, String soPhong, LocalDate ngay)
+            throws SQLException {
 
-        try (Connection c = DatabaseConnection.getConnection();
-             PreparedStatement p = c.prepareStatement(sql);
-             ResultSet r = p.executeQuery()) {
-
-            while (r.next()) {
-                list.add(mapRow(r));
-            }
+        if (blank(maSV) || blank(soPhong) || ngay == null) {
+            throw new IllegalArgumentException(
+                "Nhap du MaSV, SoPhong va ngay bat dau."
+            );
         }
 
-        return list;
+        if (ngay.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException(
+                "Ngay bat dau khong duoc o tuong lai."
+            );
+        }
+
+        transaction(c -> {
+            kiemTraSinhVien(c, maSV);
+            int sucChua = laySucChuaPhong(c, soPhong);
+
+            if (daThuePhong(c, maSV)) {
+                throw new SQLException("Sinh vien dang o mot phong.");
+            }
+
+            if (demNguoiTrongPhong(c, soPhong) >= sucChua) {
+                throw new SQLException("Phong da du suc chua.");
+            }
+
+            String sql = """
+                INSERT INTO ThuePhong(MaSV, SoPhong, NgayBatDau)
+                VALUES (?, ?, ?)
+                """;
+
+            try (PreparedStatement p = c.prepareStatement(sql)) {
+                p.setString(1, maSV.trim());
+                p.setString(2, soPhong.trim());
+                p.setDate(3, Date.valueOf(ngay));
+                p.executeUpdate();
+            }
+
+            return null;
+        });
     }
 
-    // Tim hop dong theo ma thue
-    public ThuePhong findById(Long maThue) throws SQLException {
+    // =====================================================
+    // 2. TAO HOP DONG LUU TRU
+    // =====================================================
+
+    public long themHopDong(
+            String maSV,
+            String soPhong,
+            LocalDate ngayBatDau,
+            LocalDate ngayKyHopDong,
+            LocalDate ngayHetHanHopDong,
+            BigDecimal tienCoc
+    ) throws SQLException {
+
+        kiemTraThongTinHopDong(
+            maSV,
+            soPhong,
+            ngayBatDau,
+            ngayKyHopDong,
+            ngayHetHanHopDong,
+            tienCoc
+        );
+
+        return transaction(c -> {
+
+            // Kiem tra sinh vien va phong
+            kiemTraSinhVien(c, maSV);
+
+            int sucChua = laySucChuaPhong(c, soPhong);
+
+            // Mot sinh vien khong duoc co hai hop dong dang o
+            if (daThuePhong(c, maSV)) {
+                throw new SQLException(
+                    "Sinh vien da co hop dong thue phong dang hoat dong."
+                );
+            }
+
+            // Kiem tra suc chua cua phong
+            if (demNguoiTrongPhong(c, soPhong) >= sucChua) {
+                throw new SQLException("Phong da du suc chua.");
+            }
+
+            String sql = """
+                INSERT INTO ThuePhong(
+                    MaSV,
+                    SoPhong,
+                    NgayBatDau,
+                    NgayKyHopDong,
+                    NgayHetHanHopDong,
+                    TienCoc
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """;
+
+            try (PreparedStatement p = c.prepareStatement(
+                    sql, Statement.RETURN_GENERATED_KEYS)) {
+
+                p.setString(1, maSV.trim());
+                p.setString(2, soPhong.trim());
+                p.setDate(3, Date.valueOf(ngayBatDau));
+                p.setDate(4, Date.valueOf(ngayKyHopDong));
+                p.setDate(5, Date.valueOf(ngayHetHanHopDong));
+                p.setBigDecimal(6, tienCoc);
+
+                p.executeUpdate();
+
+                try (ResultSet r = p.getGeneratedKeys()) {
+                    if (r.next()) {
+                        return r.getLong(1);
+                    }
+                }
+            }
+
+            throw new SQLException("Khong tao duoc ma hop dong.");
+        });
+    }
+
+    // =====================================================
+    // 3. CAP NHAT HOP DONG
+    // =====================================================
+
+    public void capNhatHopDong(
+            long maThue,
+            String maSV,
+            String soPhong,
+            LocalDate ngayBatDau,
+            LocalDate ngayKyHopDong,
+            LocalDate ngayHetHanHopDong,
+            BigDecimal tienCoc
+    ) throws SQLException {
+
+        if (maThue <= 0) {
+            throw new IllegalArgumentException("Ma hop dong khong hop le.");
+        }
+
+        kiemTraThongTinHopDong(
+            maSV,
+            soPhong,
+            ngayBatDau,
+            ngayKyHopHopDong(ngayKyHopDong),
+            ngayHetHanHopDong,
+            tienCoc
+        );
+
+        transaction(c -> {
+
+            // Kiem tra hop dong co ton tai khong
+            try (PreparedStatement p = c.prepareStatement(
+                    "SELECT MaThue FROM ThuePhong WHERE MaThue=? FOR UPDATE")) {
+
+                p.setLong(1, maThue);
+
+                try (ResultSet r = p.executeQuery()) {
+                    if (!r.next()) {
+                        throw new SQLException("Hop dong khong ton tai.");
+                    }
+                }
+            }
+
+            kiemTraSinhVien(c, maSV);
+
+            int sucChua = laySucChuaPhong(c, soPhong);
+
+            // Kiem tra sinh vien co hop dong khac dang hoat dong khong
+            String sqlKiemTra = """
+                SELECT COUNT(*)
+                FROM ThuePhong
+                WHERE MaSV = ?
+                  AND NgayKetThuc IS NULL
+                  AND MaThue <> ?
+                """;
+
+            try (PreparedStatement p = c.prepareStatement(sqlKiemTra)) {
+                p.setString(1, maSV.trim());
+                p.setLong(2, maThue);
+
+                try (ResultSet r = p.executeQuery()) {
+                    r.next();
+
+                    if (r.getInt(1) > 0) {
+                        throw new SQLException(
+                            "Sinh vien da co hop dong khac dang hoat dong."
+                        );
+                    }
+                }
+            }
+
+            // Dem so nguoi trong phong, khong tinh hop dong dang sua
+            String sqlDem = """
+                SELECT COUNT(*)
+                FROM ThuePhong
+                WHERE SoPhong = ?
+                  AND NgayKetThuc IS NULL
+                  AND MaThue <> ?
+                """;
+
+            try (PreparedStatement p = c.prepareStatement(sqlDem)) {
+                p.setString(1, soPhong.trim());
+                p.setLong(2, maThue);
+
+                try (ResultSet r = p.executeQuery()) {
+                    r.next();
+
+                    if (r.getInt(1) >= sucChua) {
+                        throw new SQLException("Phong da du suc chua.");
+                    }
+                }
+            }
+
+            String sql = """
+                UPDATE ThuePhong
+                SET MaSV = ?,
+                    SoPhong = ?,
+                    NgayBatDau = ?,
+                    NgayKyHopDong = ?,
+                    NgayHetHanHopDong = ?,
+                    TienCoc = ?
+                WHERE MaThue = ?
+                  AND NgayKetThuc IS NULL
+                """;
+
+            try (PreparedStatement p = c.prepareStatement(sql)) {
+                p.setString(1, maSV.trim());
+                p.setString(2, soPhong.trim());
+                p.setDate(3, Date.valueOf(ngayBatDau));
+                p.setDate(4, Date.valueOf(ngayKyHopDong));
+                p.setDate(5, Date.valueOf(ngayHetHanHopDong));
+                p.setBigDecimal(6, tienCoc);
+                p.setLong(7, maThue);
+
+                if (p.executeUpdate() == 0) {
+                    throw new SQLException(
+                        "Khong the cap nhat hop dong da ket thuc."
+                    );
+                }
+            }
+
+            return null;
+        });
+    }
+
+    // =====================================================
+    // 4. KET THUC HOP DONG
+    // =====================================================
+
+    public void ketThucHopDong(long maThue, LocalDate ngayKetThuc)
+            throws SQLException {
+
+        if (maThue <= 0 || ngayKetThuc == null) {
+            throw new IllegalArgumentException(
+                "Ma hop dong va ngay ket thuc khong duoc de trong."
+            );
+        }
+
+        if (ngayKetThuc.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException(
+                "Ngay ket thuc khong duoc o tuong lai."
+            );
+        }
+
+        transaction(c -> {
+
+            String sql = """
+                UPDATE ThuePhong
+                SET NgayKetThuc = ?
+                WHERE MaThue = ?
+                  AND NgayKetThuc IS NULL
+                  AND NgayBatDau <= ?
+                """;
+
+            try (PreparedStatement p = c.prepareStatement(sql)) {
+                p.setDate(1, Date.valueOf(ngayKetThuc));
+                p.setLong(2, maThue);
+                p.setDate(3, Date.valueOf(ngayKetThuc));
+
+                if (p.executeUpdate() == 0) {
+                    throw new SQLException(
+                        "Hop dong khong ton tai, da ket thuc hoac ngay ket thuc khong hop le."
+                    );
+                }
+            }
+
+            return null;
+        });
+    }
+
+    // =====================================================
+    // 5. TRA PHONG - GIU LAI CHUC NANG CU
+    // =====================================================
+
+    public void traPhong(String maSV, LocalDate ngayTra)
+            throws SQLException {
+
+        if (blank(maSV) || ngayTra == null) {
+            throw new IllegalArgumentException(
+                "Nhap MaSV va ngay tra."
+            );
+        }
+
+        if (ngayTra.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException(
+                "Ngay tra khong duoc o tuong lai."
+            );
+        }
+
         String sql = """
-            SELECT MaThue, MaSV, SoPhong, NgayBatDau, NgayKetThuc,
-                   NgayKyHopDong, NgayHetHanHopDong, TienCoc
-            FROM ThuePhong
-            WHERE MaThue = ?
+            UPDATE ThuePhong
+            SET NgayKetThuc = ?
+            WHERE MaSV = ?
+              AND NgayKetThuc IS NULL
+              AND NgayBatDau <= ?
             """;
 
         try (Connection c = DatabaseConnection.getConnection();
              PreparedStatement p = c.prepareStatement(sql)) {
 
-            p.setLong(1, maThue);
+            p.setDate(1, Date.valueOf(ngayTra));
+            p.setString(2, maSV.trim());
+            p.setDate(3, Date.valueOf(ngayTra));
+
+            if (p.executeUpdate() == 0) {
+                throw new SQLException(
+                    "Khong co hop dong hop le hoac ngay tra truoc ngay bat dau."
+                );
+            }
+        }
+    }
+
+    // =====================================================
+    // 6. CAC HAM KIEM TRA DU LIEU
+    // =====================================================
+
+    private void kiemTraThongTinHopDong(
+            String maSV,
+            String soPhong,
+            LocalDate ngayBatDau,
+            LocalDate ngayKyHopDong,
+            LocalDate ngayHetHanHopDong,
+            BigDecimal tienCoc
+    ) {
+
+        if (blank(maSV) || blank(soPhong)
+                || ngayBatDau == null
+                || ngayKyHopDong == null
+                || ngayHetHanHopDong == null
+                || tienCoc == null) {
+
+            throw new IllegalArgumentException(
+                "Vui long nhap day du thong tin hop dong."
+            );
+        }
+
+        if (ngayBatDau.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException(
+                "Ngay bat dau khong duoc o tuong lai."
+            );
+        }
+
+        if (ngayKyHopDong.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException(
+                "Ngay ky hop dong khong duoc o tuong lai."
+            );
+        }
+
+        if (ngayHetHanHopDong.isBefore(ngayBatDau)) {
+            throw new IllegalArgumentException(
+                "Ngay het han phai sau ngay bat dau."
+            );
+        }
+
+        if (ngayKyHopDong.isAfter(ngayHetHanHopDong)) {
+            throw new IllegalArgumentException(
+                "Ngay ky khong the sau ngay het han."
+            );
+        }
+
+        if (tienCoc.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException(
+                "Tien coc khong duoc la so am."
+            );
+        }
+    }
+
+    private void kiemTraSinhVien(Connection c, String maSV)
+            throws SQLException {
+
+        try (PreparedStatement p = c.prepareStatement(
+                "SELECT MaSV FROM SinhVien WHERE MaSV=? FOR UPDATE")) {
+
+            p.setString(1, maSV.trim());
 
             try (ResultSet r = p.executeQuery()) {
-                if (r.next()) {
-                    return mapRow(r);
+                if (!r.next()) {
+                    throw new SQLException("Sinh vien khong ton tai.");
                 }
             }
         }
-
-        return null;
     }
 
-    // Lay danh sach hop dong dang co hieu luc
-    public List<ThuePhong> findActiveByStudent(String maSV) throws SQLException {
+    private int laySucChuaPhong(Connection c, String soPhong)
+            throws SQLException {
+
+        try (PreparedStatement p = c.prepareStatement(
+                "SELECT SoNguoiToiDa FROM Phong WHERE SoPhong=? FOR UPDATE")) {
+
+            p.setString(1, soPhong.trim());
+
+            try (ResultSet r = p.executeQuery()) {
+                if (!r.next()) {
+                    throw new SQLException("Phong khong ton tai.");
+                }
+
+                return r.getInt("SoNguoiToiDa");
+            }
+        }
+    }
+
+    private boolean daThuePhong(Connection c, String maSV)
+            throws SQLException {
+
         String sql = """
-            SELECT MaThue, MaSV, SoPhong, NgayBatDau, NgayKetThuc,
-                   NgayKyHopDong, NgayHetHanHopDong, TienCoc
+            SELECT COUNT(*)
             FROM ThuePhong
             WHERE MaSV = ? AND NgayKetThuc IS NULL
             """;
 
-        List<ThuePhong> list = new ArrayList<>();
-
-        try (Connection c = DatabaseConnection.getConnection();
-             PreparedStatement p = c.prepareStatement(sql)) {
-
-            p.setString(1, maSV);
+        try (PreparedStatement p = c.prepareStatement(sql)) {
+            p.setString(1, maSV.trim());
 
             try (ResultSet r = p.executeQuery()) {
-                while (r.next()) {
-                    list.add(mapRow(r));
-                }
-            }
-        }
-
-        return list;
-    }
-
-    // Kiem tra sinh vien co hop dong dang thue hay khong
-    public boolean existsActiveByStudent(String maSV) throws SQLException {
-        String sql = """
-            SELECT 1
-            FROM ThuePhong
-            WHERE MaSV = ? AND NgayKetThuc IS NULL
-            LIMIT 1
-            """;
-
-        try (Connection c = DatabaseConnection.getConnection();
-             PreparedStatement p = c.prepareStatement(sql)) {
-
-            p.setString(1, maSV);
-
-            try (ResultSet r = p.executeQuery()) {
-                return r.next();
+                r.next();
+                return r.getInt(1) > 0;
             }
         }
     }
 
-    // Dem so sinh vien dang o trong phong
-    public int countActiveInRoom(String soPhong) throws SQLException {
+    private int demNguoiTrongPhong(Connection c, String soPhong)
+            throws SQLException {
+
         String sql = """
             SELECT COUNT(*)
             FROM ThuePhong
             WHERE SoPhong = ? AND NgayKetThuc IS NULL
             """;
 
-        try (Connection c = DatabaseConnection.getConnection();
-             PreparedStatement p = c.prepareStatement(sql)) {
-
-            p.setString(1, soPhong);
+        try (PreparedStatement p = c.prepareStatement(sql)) {
+            p.setString(1, soPhong.trim());
 
             try (ResultSet r = p.executeQuery()) {
-                if (r.next()) {
-                    return r.getInt(1);
-                }
+                r.next();
+                return r.getInt(1);
             }
         }
-
-        return 0;
     }
 
-    // Them hop dong moi
-    public void insert(ThuePhong thuePhong) throws SQLException {
-        String sql = """
-            INSERT INTO ThuePhong(
-                MaSV, SoPhong, NgayBatDau, NgayKetThuc,
-                NgayKyHopDong, NgayHetHanHopDong, TienCoc
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """;
+    // =====================================================
+    // 7. QUAN LY GIAO DICH DATABASE
+    // =====================================================
 
-        try (Connection c = DatabaseConnection.getConnection();
-             PreparedStatement p = c.prepareStatement(sql)) {
+    private <T> T transaction(SqlWork<T> work) throws SQLException {
 
-            p.setString(1, thuePhong.maSV());
-            p.setString(2, thuePhong.soPhong());
-            p.setDate(3, Date.valueOf(thuePhong.ngayBatDau()));
+        try (Connection c = DatabaseConnection.getConnection()) {
 
-            setDateOrNull(p, 4, thuePhong.ngayKetThuc());
-            setDateOrNull(p, 5, thuePhong.ngayKyHopDong());
-            setDateOrNull(p, 6, thuePhong.ngayHetHanHopDong());
+            c.setAutoCommit(false);
 
-            if (thuePhong.tienCoc() == null) {
-                p.setNull(7, Types.DECIMAL);
-            } else {
-                p.setBigDecimal(7, thuePhong.tienCoc());
+            try {
+                T result = work.run(c);
+                c.commit();
+                return result;
+
+            } catch (SQLException | RuntimeException e) {
+                c.rollback();
+                throw e;
+
+            } finally {
+                c.setAutoCommit(true);
             }
-
-            p.executeUpdate();
         }
     }
 
-    // Cap nhat thong tin hop dong
-    public boolean update(ThuePhong thuePhong) throws SQLException {
-        String sql = """
-            UPDATE ThuePhong
-            SET MaSV = ?,
-                SoPhong = ?,
-                NgayBatDau = ?,
-                NgayKetThuc = ?,
-                NgayKyHopDong = ?,
-                NgayHetHanHopDong = ?,
-                TienCoc = ?
-            WHERE MaThue = ?
-            """;
-
-        try (Connection c = DatabaseConnection.getConnection();
-             PreparedStatement p = c.prepareStatement(sql)) {
-
-            p.setString(1, thuePhong.maSV());
-            p.setString(2, thuePhong.soPhong());
-            p.setDate(3, Date.valueOf(thuePhong.ngayBatDau()));
-
-            setDateOrNull(p, 4, thuePhong.ngayKetThuc());
-            setDateOrNull(p, 5, thuePhong.ngayKyHopDong());
-            setDateOrNull(p, 6, thuePhong.ngayHetHanHopDong());
-
-            if (thuePhong.tienCoc() == null) {
-                p.setNull(7, Types.DECIMAL);
-            } else {
-                p.setBigDecimal(7, thuePhong.tienCoc());
-            }
-
-            p.setLong(8, thuePhong.maThue());
-
-            return p.executeUpdate() > 0;
-        }
+    @FunctionalInterface
+    private interface SqlWork<T> {
+        T run(Connection c) throws SQLException;
     }
 
-    // Ket thuc hop dong theo ma sinh vien
-    public boolean closeByStudent(
-            String maSV,
-            java.time.LocalDate ngayKetThuc
-    ) throws SQLException {
-
-        String sql = """
-            UPDATE ThuePhong
-            SET NgayKetThuc = ?
-            WHERE MaSV = ? AND NgayKetThuc IS NULL
-            """;
-
-        try (Connection c = DatabaseConnection.getConnection();
-             PreparedStatement p = c.prepareStatement(sql)) {
-
-            p.setDate(1, Date.valueOf(ngayKetThuc));
-            p.setString(2, maSV);
-
-            return p.executeUpdate() > 0;
-        }
+    private boolean blank(String value) {
+        return value == null || value.isBlank();
     }
 
-    // Chuyen LocalDate thanh SQL Date, cho phep gia tri null
-    private void setDateOrNull(
-            PreparedStatement p,
-            int index,
-            java.time.LocalDate value
-    ) throws SQLException {
-
-        if (value == null) {
-            p.setNull(index, Types.DATE);
-        } else {
-            p.setDate(index, Date.valueOf(value));
-        }
-    }
-
-    // Chuyen mot dong du lieu trong database thanh doi tuong ThuePhong
-    private ThuePhong mapRow(ResultSet r) throws SQLException {
-
-        return new ThuePhong(
-            r.getLong("MaThue"),
-            r.getString("MaSV"),
-            r.getString("SoPhong"),
-
-            r.getDate("NgayBatDau") == null
-                ? null
-                : r.getDate("NgayBatDau").toLocalDate(),
-
-            r.getDate("NgayKetThuc") == null
-                ? null
-                : r.getDate("NgayKetThuc").toLocalDate(),
-
-            r.getDate("NgayKyHopDong") == null
-                ? null
-                : r.getDate("NgayKyHopDong").toLocalDate(),
-
-            r.getDate("NgayHetHanHopDong") == null
-                ? null
-                : r.getDate("NgayHetHanHopDong").toLocalDate(),
-
-            r.getBigDecimal("TienCoc")
-        );
+    private LocalDate ngayKyHopHopDong(LocalDate ngayKy) {
+        return ngayKy;
     }
 }
