@@ -147,8 +147,9 @@ Tên package hoặc đường dẫn thực tế có thể khác tùy cấu trúc
 ### Nhóm báo hỏng/bảo trì
 
 - `BaoHong`
+- `LichSuBaoHong`
 
-Các cột mở rộng về trạng thái lưu trú/hợp đồng có thể được bổ sung vào `SinhVien`, `Phong` và `ThuePhong` sau khi nhóm rà soát schema hiện tại. Không tạo cột trùng với cột đã tồn tại.
+Thông tin ngày ký, ngày hết hạn và tiền cọc của hợp đồng được bổ sung vào `ThuePhong` bằng migration `database/07_hop_dong_luu_tru.sql`.
 
 ## 5. Quy tắc nghiệp vụ quan trọng
 
@@ -169,13 +170,14 @@ Các cột mở rộng về trạng thái lưu trú/hợp đồng có thể đư
 
 1. Cài JDK phù hợp với cấu hình Maven trong `pom.xml`.
 2. Cài MySQL 8.0+ và mở MySQL Workbench.
-3. Chạy script `database/01_ktx_schema.sql` trên schema được cấp.
-4. Cấu hình thông tin kết nối database bằng biến môi trường hoặc cấu hình riêng:
+3. Chạy `database/01_ktx_schema.sql` để tạo schema và các bảng cốt lõi.
+4. Chạy các migration cần cho demo: `03_hoa_don_migration.sql`, `03_khach_tham_phan_Nam.sql`, `05_bao_hong_phan_Nam.sql` và `07_hop_dong_luu_tru.sql`. Các script này sử dụng schema `KTX`; nếu được cấp schema tên khác, sửa lệnh `USE KTX` trước khi chạy.
+5. Cấu hình thông tin kết nối database bằng biến môi trường hoặc cấu hình riêng:
    - `KTX_DB_URL`
    - `KTX_DB_USER`
    - `KTX_DB_PASSWORD`
-5. Mở project Maven bằng VS Code.
-6. Tải dependency Maven và chạy lớp main `ktx.ui.MainFrame` (nếu đây vẫn là lớp main trong source hiện tại).
+6. Mở project Maven bằng VS Code.
+7. Tải dependency Maven và chạy lớp main `ktx.ui.MainFrame`.
 
 Nếu tài khoản MySQL không có quyền `CREATE DATABASE`, chọn schema do giảng viên cấp, bỏ qua lệnh `CREATE DATABASE`/`USE KTX` và chạy các lệnh tạo bảng trong schema đó.
 

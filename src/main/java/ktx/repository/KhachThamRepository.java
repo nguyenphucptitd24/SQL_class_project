@@ -5,6 +5,7 @@ import ktx.model.Khach;
 import ktx.model.LuotTham;
 import ktx.model.SinhVien;
 import ktx.model.ThongKeKhachTham;
+import ktx.model.ThongKeNgay;
 import ktx.model.TongKhachTham;
 import ktx.model.TongSinhVienDuocTham;
 import java.sql.Connection;
@@ -266,6 +267,23 @@ public class KhachThamRepository {
             p.setTimestamp(2, Timestamp.valueOf(den));
             try (ResultSet r = p.executeQuery()) {
                 while (r.next()) out.add(new TongSinhVienDuocTham(mapSinhVien(r), r.getInt("SoLuot"), r.getInt("SoKhach")));
+            }
+        }
+        return out;
+    }
+
+    /** Số lượt thăm và số khách khác nhau của từng ngày trong khoảng [tu, den) theo giờ đến; ngày không có khách thì không hiện. */
+    public List<ThongKeNgay> thongKeTheoNgay(LocalDateTime tu, LocalDateTime den) throws SQLException {
+        String sql =
+            "SELECT DATE(lt.ThoiGianDen) AS Ngay, COUNT(*) AS SoLuot, COUNT(DISTINCT lt.SoCMTKhach) AS SoKhach "
+          + "FROM LuotTham lt WHERE lt.ThoiGianDen >= ? AND lt.ThoiGianDen < ? "
+          + "GROUP BY DATE(lt.ThoiGianDen) ORDER BY Ngay";
+        List<ThongKeNgay> out = new ArrayList<>();
+        try (Connection c = DatabaseConnection.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setTimestamp(1, Timestamp.valueOf(tu));
+            p.setTimestamp(2, Timestamp.valueOf(den));
+            try (ResultSet r = p.executeQuery()) {
+                while (r.next()) out.add(new ThongKeNgay(r.getDate("Ngay").toLocalDate(), r.getInt("SoLuot"), r.getInt("SoKhach")));
             }
         }
         return out;
