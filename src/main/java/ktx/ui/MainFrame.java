@@ -16,6 +16,8 @@ public class MainFrame extends JFrame {
 
         addOptionalTab(tabs, "Xe ve thang", "ktx.ui.XeThangPanel");
         addOptionalTab(tabs, "Khach tham", "ktx.ui.KhachThamPanel");
+        addOptionalTab(tabs, "Bao hong", "ktx.ui.BaoHongPanel");
+        addOptionalTab(tabs, "Hop dong luu tru", "ktx.ui.LuuTruPanel");
 
         setContentPane(tabs);
     }

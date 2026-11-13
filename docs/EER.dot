@@ -4,13 +4,15 @@ digraph KTX {
   edge [fontname="Arial", fontsize=9, color="#555555", arrowsize=0.8];
   SV [label="{SinhVien|PK MaSV\lUQ SoCMT\lNgaySinh\lLop\lQueQuan\l}"];
   PH [label="{Phong|PK SoPhong\lLoaiPhong\lDonGia\lSoNguoiToiDa\l}"];
-  TP [label="{ThuePhong|PK MaThue\lFK MaSV\lFK SoPhong\lNgayBatDau\lNgayKetThuc (NULL=dang o)\l}", fillcolor="#fff5df", color="#9b7535"];
+  TP [label="{ThuePhong|PK MaThue\lFK MaSV\lFK SoPhong\lNgayBatDau\lNgayKetThuc (NULL=dang o)\lNgayKyHopDong\lNgayHetHanHopDong\lTienCoc\l}", fillcolor="#fff5df", color="#9b7535"];
   DV [label="{DichVu|PK MaDV\lTenDV\lDonGia\lMoTa\l}"];
   SD [label="{SuDungDichVu|PK MaSuDung\lFK MaSV\lFK MaDV\lThoiGianSuDung\lSoLuong\lDonGiaApDung\l}", fillcolor="#fff5df", color="#9b7535"];
   XE [label="{XeThang|PK MaXe\lFK MaSV\lUQ BienSo\lLoaiXe\lNgayDangKy\lNgayHetHan\lDonGiaThang\l}"];
   LX [label="{LuotXe|PK MaLuot\lFK MaXe\lThoiGianLay\lThoiGianGui\lSoLuotMienPhiSuDung\lSoTienPhatSinh\l}", fillcolor="#fff5df", color="#9b7535"];
   K [label="{Khach|PK SoCMT\lHoTen\lNgaySinh\l}"];
   LT [label="{LuotTham|PK MaLuotTham\lFK SoCMTKhach\lFK MaSV\lThoiGianDen\l}", fillcolor="#fff5df", color="#9b7535"];
+  BH [label="{BaoHong|PK MaBaoHong\lFK SoPhong\lFK MaSV (NULL=nhan vien bao)\lLoaiSuCo\lMoTa\lMucDo\lTrangThai\lNgayBao\lNgayXuLy\lNhanVienXuLy\lKetQuaXuLy\l}", fillcolor="#fff5df", color="#9b7535"];
+  LSBH [label="{LichSuBaoHong|PK MaLichSu\lFK MaBaoHong\lTrangThaiCu\lTrangThaiMoi\lNhanVien\lGhiChu\lThoiGian\l}"];
   SV -> TP [label="1 : N"];
   PH -> TP [label="1 : N"];
   SV -> SD [label="1 : N"];
@@ -19,4 +21,7 @@ digraph KTX {
   XE -> LX [label="1 : N"];
   K -> LT [label="1 : N"];
   SV -> LT [label="1 : N"];
+  PH -> BH [label="1 : N"];
+  SV -> BH [label="0..1 : N"];
+  BH -> LSBH [label="1 : N"];
 }

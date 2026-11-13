@@ -16,7 +16,8 @@ import java.util.List;
 public class ThuePhongRepository {
 
     public List<ThuePhong> findAll() throws SQLException {
-        String sql = "SELECT MaThue, MaSV, SoPhong, NgayBatDau, NgayKetThuc FROM ThuePhong ORDER BY MaThue";
+        String sql = "SELECT MaThue, MaSV, SoPhong, NgayBatDau, NgayKetThuc, "
+                   + "NgayKyHopDong, NgayHetHanHopDong, TienCoc FROM ThuePhong ORDER BY MaThue";
         List<ThuePhong> list = new ArrayList<>();
         try (Connection c = DatabaseConnection.getConnection();
              PreparedStatement p = c.prepareStatement(sql);
@@ -34,8 +35,22 @@ public class ThuePhongRepository {
         return list;
     }
 
+    public ThuePhong findById(long maThue) throws SQLException {
+        String sql = "SELECT MaThue, MaSV, SoPhong, NgayBatDau, NgayKetThuc, "
+                   + "NgayKyHopDong, NgayHetHanHopDong, TienCoc FROM ThuePhong WHERE MaThue = ?";
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement p = c.prepareStatement(sql)) {
+            p.setLong(1, maThue);
+            try (ResultSet r = p.executeQuery()) {
+                return r.next() ? mapRow(r) : null;
+            }
+        }
+    }
+
     public List<ThuePhong> findActiveByStudent(String maSV) throws SQLException {
-        String sql = "SELECT MaThue, MaSV, SoPhong, NgayBatDau, NgayKetThuc FROM ThuePhong WHERE MaSV = ? AND NgayKetThuc IS NULL";
+        String sql = "SELECT MaThue, MaSV, SoPhong, NgayBatDau, NgayKetThuc, "
+                   + "NgayKyHopDong, NgayHetHanHopDong, TienCoc FROM ThuePhong "
+                   + "WHERE MaSV = ? AND NgayKetThuc IS NULL";
         List<ThuePhong> list = new ArrayList<>();
         try (Connection c = DatabaseConnection.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
             p.setString(1, maSV);
@@ -70,7 +85,8 @@ public class ThuePhongRepository {
     }
 
     public void insert(ThuePhong thuePhong) throws SQLException {
-        String sql = "INSERT INTO ThuePhong(MaSV, SoPhong, NgayBatDau, NgayKetThuc) VALUES(?, ?, ?, ?)";
+        String sql = "INSERT INTO ThuePhong(MaSV, SoPhong, NgayBatDau, NgayKetThuc, "
+                   + "NgayKyHopDong, TienCoc) VALUES(?, ?, ?, ?, ?, 0)";
         try (Connection c = DatabaseConnection.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
             p.setString(1, thuePhong.maSV());
             p.setString(2, thuePhong.soPhong());
@@ -80,6 +96,8 @@ public class ThuePhongRepository {
             } else {
                 p.setDate(4, Date.valueOf(thuePhong.ngayKetThuc()));
             }
+            p.setDate(5, Date.valueOf(thuePhong.ngayKyHopDong() == null
+                    ? thuePhong.ngayBatDau() : thuePhong.ngayKyHopDong()));
             p.executeUpdate();
         }
     }
@@ -100,7 +118,10 @@ public class ThuePhongRepository {
             r.getString("MaSV"),
             r.getString("SoPhong"),
             r.getDate("NgayBatDau").toLocalDate(),
-            ngayKetThuc
+            ngayKetThuc,
+            r.getDate("NgayKyHopDong") == null ? null : r.getDate("NgayKyHopDong").toLocalDate(),
+            r.getDate("NgayHetHanHopDong") == null ? null : r.getDate("NgayHetHanHopDong").toLocalDate(),
+            r.getBigDecimal("TienCoc")
         );
     }
 }

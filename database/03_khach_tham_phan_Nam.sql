@@ -4,6 +4,7 @@
 -- Script chạy lại nhiều lần được (idempotent).
 -- Lưu file ở dạng UTF-8 để giữ đúng tiếng Việt có dấu.
 -- =====================================================================
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;   -- trùng collation của CSDL KTX, tránh lỗi "Illegal mix of collations" khi so sánh với hằng/biến
 USE KTX;
 
 -- ---------------------------------------------------------------------
