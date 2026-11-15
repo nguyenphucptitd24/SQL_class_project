@@ -157,10 +157,15 @@ public class XeThangPanel extends JPanel {
             if (bienSo == null) return;
             String loaiXe = ask("Loai xe:");
             if (loaiXe == null) return;
+            String registration = JOptionPane.showInputDialog(
+                this, "Ngay dang ky (yyyy-MM-dd):", LocalDate.now().toString()
+            );
+            if (registration == null) return;
+            LocalDate ngayDangKy = LocalDate.parse(registration.trim());
             String expiry = ask("Ngay het han (yyyy-MM-dd, de trong neu chua xac dinh):");
             if (expiry == null) return;
             LocalDate ngayHetHan = expiry.isBlank() ? null : LocalDate.parse(expiry.trim());
-            service.dangKyXe(maXe, maSV, bienSo, loaiXe, ngayHetHan);
+            service.dangKyXe(maXe, maSV, bienSo, loaiXe, ngayDangKy, ngayHetHan);
             info("Dang ky xe thanh cong. Don gia ve thang: " + XeThangService.DON_GIA_THANG + " VND.");
             refreshVehicles();
         } catch (Exception e) {

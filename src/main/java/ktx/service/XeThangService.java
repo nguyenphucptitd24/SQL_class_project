@@ -19,14 +19,16 @@ public class XeThangService {
     private static final ZoneId KTX_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     public void dangKyXe(String maXe, String maSV, String bienSo, String loaiXe,
-                         LocalDate ngayHetHan) throws SQLException {
+                         LocalDate ngayDangKy, LocalDate ngayHetHan) throws SQLException {
         requireText(maXe, "Ma xe");
         requireText(maSV, "Ma sinh vien");
         requireText(bienSo, "Bien so");
         requireText(loaiXe, "Loai xe");
-        LocalDate ngayDangKy = LocalDate.now(KTX_ZONE);
+        if (ngayDangKy == null || ngayDangKy.isAfter(LocalDate.now(KTX_ZONE))) {
+            throw new IllegalArgumentException("Ngay dang ky khong hop le hoac o tuong lai.");
+        }
         if (ngayHetHan != null && ngayHetHan.isBefore(ngayDangKy)) {
-            throw new IllegalArgumentException("Ngay het han khong duoc truoc ngay dang ky.");
+            throw new IllegalArgumentException("Ngay het han khong duoc truoc ngay dang ky xe.");
         }
 
         transaction(c -> {
@@ -265,7 +267,7 @@ public class XeThangService {
 
     private Registration lockVehicle(Connection c, String maXe) throws SQLException {
         try (PreparedStatement p = c.prepareStatement(
-                "SELECT NgayDangKy,NgayHetHan FROM XeThang WHERE MaXe=? FOR UPDATE")) {
+                "SELECT MaSV,NgayDangKy,NgayHetHan FROM XeThang WHERE MaXe=? FOR UPDATE")) {
             p.setString(1, maXe.trim());
             try (ResultSet r = p.executeQuery()) {
                 if (!r.next()) throw new SQLException("Xe thang khong ton tai.");
