@@ -14,7 +14,7 @@ import java.awt.*;
 public class BaoHongPanel extends JPanel {
     public BaoHongPanel() {
         setLayout(new BorderLayout());
-        JTabbedPane tabs = new JTabbedPane();
+        JTabbedPane tabs = new AnimatedTabbedPane();
         ChiTietBaoHongTab chiTiet = new ChiTietBaoHongTab();
         CapNhatBaoHongTab capNhat = new CapNhatBaoHongTab();
         DanhSachBaoHongTab danhSach = new DanhSachBaoHongTab(

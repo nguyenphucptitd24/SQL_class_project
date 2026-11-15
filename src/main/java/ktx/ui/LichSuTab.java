@@ -14,9 +14,9 @@ class LichSuTab extends JPanel implements KhachThamUi.TaiLai {
     private final DefaultTableModel model = KhachThamUi.taoBang(
         "Mã lượt", "Số CMT khách", "Họ tên khách", "Mã SV được thăm", "Giờ đến", "Giờ về", "Thời lượng");
     private final JTable table = new JTable(model);
-    private final JTextField tuKhoa = new JTextField(14);
-    private final JTextField tuNgay = new JTextField(9);
-    private final JTextField denNgay = new JTextField(9);
+    private final JTextField tuKhoa = new HintTextField("CMT, tên hoặc mã SV", 14);
+    private final JTextField tuNgay = new HintTextField("dd/MM/yyyy", 9);
+    private final JTextField denNgay = new HintTextField("dd/MM/yyyy", 9);
     private final JLabel ketQua = new JLabel(" ");
 
     LichSuTab() {

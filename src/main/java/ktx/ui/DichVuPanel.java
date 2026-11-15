@@ -32,11 +32,11 @@ public class DichVuPanel extends JPanel {
     private final JTable serviceTable = new JTable(serviceTableModel);
     private final JTable billTable = new JTable(billTableModel);
 
-    private final JTextField txtMaDV = new JTextField();
-    private final JTextField txtTenDV = new JTextField();
-    private final JTextField txtDonGia = new JTextField();
-    private final JTextField txtMoTa = new JTextField();
-    private final JTextField txtMaSV = new JTextField();
+    private final JTextField txtMaDV = new HintTextField("Nhập mã dịch vụ", 12);
+    private final JTextField txtTenDV = new HintTextField("Nhập tên dịch vụ", 12);
+    private final JTextField txtDonGia = new HintTextField("Nhập đơn giá (VNĐ)", 12);
+    private final JTextField txtMoTa = new HintTextField("Nhập mô tả", 12);
+    private final JTextField txtMaSV = new HintTextField("Nhập mã sinh viên", 12);
     private final JComboBox<DichVu> cbDichVu = new JComboBox<>();
     private final JTextField txtSoLuong = new JTextField("1");
     private final JTextField txtNgaySuDung = new JTextField(LocalDate.now().toString());

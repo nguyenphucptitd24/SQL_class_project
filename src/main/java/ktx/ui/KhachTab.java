@@ -13,7 +13,7 @@ class KhachTab extends JPanel implements KhachThamUi.TaiLai {
     private final KhachThamService service = new KhachThamService();
     private final DefaultTableModel model = KhachThamUi.taoBang("Số CMT", "Họ tên", "Ngày sinh");
     private final JTable table = new JTable(model);
-    private final JTextField search = new JTextField(20);
+    private final JTextField search = new HintTextField("Nhập số CMT hoặc họ tên", 20);
     private final List<Khach> hienTai = new ArrayList<>();
 
     KhachTab() {

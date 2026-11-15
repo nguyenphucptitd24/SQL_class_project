@@ -36,7 +36,7 @@ class ThongKeBaoHongTab extends JPanel implements KhachThamUi.TaiLai {
         bac.add(tomTat, BorderLayout.SOUTH);
         add(bac, BorderLayout.NORTH);
 
-        JTabbedPane kq = new JTabbedPane();
+        JTabbedPane kq = new AnimatedTabbedPane();
         kq.addTab("Theo loại sự cố", new JScrollPane(new JTable(mLoai)));
         kq.addTab("Theo mức độ", new JScrollPane(new JTable(mMucDo)));
         kq.addTab("Theo tháng", new JScrollPane(new JTable(mThang)));

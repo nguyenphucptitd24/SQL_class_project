@@ -14,11 +14,11 @@ import java.util.List;
 /** Tab "Ghi nhận lượt thăm": ghi nhận khách đến, và ghi nhận giờ về cho khách đang ở trong KTX. */
 class GhiNhanTab extends JPanel implements KhachThamUi.TaiLai {
     private final KhachThamService service = new KhachThamService();
-    private final JTextField cmt = new JTextField(18);
+    private final JTextField cmt = new HintTextField("Nhập số CMT khách", 18);
     private final JLabel tenKhach = new JLabel(" ");
-    private final JTextField maSV = new JTextField(18);
+    private final JTextField maSV = new HintTextField("Nhập mã sinh viên", 18);
     private final JTextField gioDen = new JTextField(KhachThamUi.bayGio(), 18);
-    private final JTextField gioVe = new JTextField(18);
+    private final JTextField gioVe = new HintTextField("Bỏ trống nếu khách chưa về", 18);
     private final DefaultTableModel model =
         KhachThamUi.taoBang("Mã lượt", "Số CMT khách", "Họ tên khách", "Mã SV được thăm", "Giờ đến", "Đã ở");
     private final JTable table = new JTable(model);

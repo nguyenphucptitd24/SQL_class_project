@@ -15,8 +15,8 @@ class TaoBaoHongTab extends JPanel implements KhachThamUi.TaiLai {
 
     private final JRadioButton rbSinhVien = new JRadioButton("Sinh viên báo", true);
     private final JRadioButton rbNhanVien = new JRadioButton("Nhân viên phát hiện");
-    private final JTextField maSV = new JTextField(18);
-    private final JTextField nhanVien = new JTextField(18);
+    private final JTextField maSV = new HintTextField("Nhập mã sinh viên", 18);
+    private final JTextField nhanVien = new HintTextField("Nhập tên nhân viên", 18);
     private final JLabel goiY = new JLabel(" ");
     private final JComboBox<String> phong = new JComboBox<>();
     private final JComboBox<String> loai = new JComboBox<>(BaoHongDanhMuc.LOAI.toArray(new String[0]));

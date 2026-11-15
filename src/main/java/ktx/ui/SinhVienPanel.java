@@ -14,7 +14,7 @@ public class SinhVienPanel extends JPanel {
         public boolean isCellEditable(int r,int c){return false;}
     };
     private final JTable table=new JTable(model);
-    private final JTextField search=new JTextField(18);
+    private final JTextField search=new HintTextField("Nhập mã SV, lớp hoặc quê quán", 18);
     public SinhVienPanel(){
         setLayout(new BorderLayout(8,8));
         JPanel bar=new JPanel(new FlowLayout(FlowLayout.LEFT));

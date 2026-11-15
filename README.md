@@ -176,8 +176,19 @@ Thông tin ngày ký, ngày hết hạn và tiền cọc của hợp đồng đ�
    - `KTX_DB_URL`
    - `KTX_DB_USER`
    - `KTX_DB_PASSWORD`
-6. Mở project Maven bằng VS Code.
-7. Tải dependency Maven và chạy lớp main `ktx.ui.MainFrame`.
+6. Cài Apache Maven và thêm thư mục `bin` của Maven vào `PATH`. Đặt `MAVEN_HOME` trỏ đến thư mục cài đặt Maven nếu muốn dùng lệnh dự phòng bên dưới.
+7. Mở thư mục gốc của project trong VS Code.
+8. Mở PowerShell tại thư mục gốc project và chạy:
+
+   ```powershell
+   mvn compile exec:java
+   ```
+
+   Nếu PowerShell báo không nhận diện `mvn`, hãy kiểm tra Maven `bin` đã có trong `PATH` và khởi động lại VS Code. Có thể chạy Maven trực tiếp bằng:
+
+   ```powershell
+   & "$env:MAVEN_HOME\bin\mvn.cmd" compile exec:java
+   ```
 
 Nếu tài khoản MySQL không có quyền `CREATE DATABASE`, chọn schema do giảng viên cấp, bỏ qua lệnh `CREATE DATABASE`/`USE KTX` và chạy các lệnh tạo bảng trong schema đó.
 

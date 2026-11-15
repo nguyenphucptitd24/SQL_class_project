@@ -49,7 +49,7 @@ public class XeThangPanel extends JPanel {
         eventMonth.setText(currentMonth.toString());
         feeMonth.setText(currentMonth.toString());
 
-        JTabbedPane tabs = new JTabbedPane();
+        JTabbedPane tabs = new AnimatedTabbedPane();
         tabs.addTab("Xe dang ky", buildVehicleTab());
         tabs.addTab("Lich su lay/gui", buildEventTab());
         tabs.addTab("Phi theo thang", buildFeeTab());

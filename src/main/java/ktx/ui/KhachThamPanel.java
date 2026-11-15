@@ -14,7 +14,7 @@ import java.awt.*;
 public class KhachThamPanel extends JPanel {
     public KhachThamPanel() {
         setLayout(new BorderLayout());
-        JTabbedPane tabs = new JTabbedPane();
+        JTabbedPane tabs = new AnimatedTabbedPane();
         tabs.addTab("Khách", new KhachTab());
         tabs.addTab("Ghi nhận lượt thăm", new GhiNhanTab());
         tabs.addTab("Lịch sử", new LichSuTab());

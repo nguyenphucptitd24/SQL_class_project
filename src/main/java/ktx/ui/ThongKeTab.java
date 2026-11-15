@@ -50,7 +50,7 @@ class ThongKeTab extends JPanel {
         tomTat.setBorder(BorderFactory.createEmptyBorder(0, 10, 4, 0));
         add(bac, BorderLayout.NORTH);
 
-        JTabbedPane kq = new JTabbedPane();
+        JTabbedPane kq = new AnimatedTabbedPane();
         kq.addTab("Khách đến thăm từng sinh viên", new JScrollPane(new JTable(mKhachTheoSV)));
         kq.addTab("Tổng số lần mỗi khách đến", new JScrollPane(new JTable(mTheoKhach)));
         kq.addTab("Số lượt thăm của từng sinh viên", new JScrollPane(new JTable(mTheoSV)));

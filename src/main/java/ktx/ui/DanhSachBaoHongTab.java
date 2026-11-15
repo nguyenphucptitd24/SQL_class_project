@@ -27,12 +27,12 @@ class DanhSachBaoHongTab extends JPanel implements KhachThamUi.TaiLai {
     private final List<BaoHong> hienTai = new ArrayList<>();
 
     private final JComboBox<String> phong = new JComboBox<>();
-    private final JTextField maSV = new JTextField(8);
+    private final JTextField maSV = new HintTextField("Mã SV", 8);
     private final JComboBox<String> trangThai = new JComboBox<>(cacLuaChon(CHUA_XONG, BaoHongDanhMuc.TRANG_THAI));
     private final JComboBox<String> loai = new JComboBox<>(cacLuaChon(null, BaoHongDanhMuc.LOAI));
     private final JComboBox<String> mucDo = new JComboBox<>(cacLuaChon(null, BaoHongDanhMuc.MUC_DO));
-    private final JTextField tuNgay = new JTextField(9);
-    private final JTextField denNgay = new JTextField(9);
+    private final JTextField tuNgay = new HintTextField("dd/MM/yyyy", 9);
+    private final JTextField denNgay = new HintTextField("dd/MM/yyyy", 9);
     private final JLabel canhBao = new JLabel(" ");
     private boolean uuTienMucDo = false;
 
